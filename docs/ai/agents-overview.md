@@ -453,4 +453,4 @@ For issues or questions about agents:
 
 ---
 
-*Last updated: November 7, 2025*
+*Last updated: November 7, 2024*
