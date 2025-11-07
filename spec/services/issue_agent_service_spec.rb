@@ -4,14 +4,18 @@ require "rails_helper"
 
 RSpec.describe IssueAgentService do
   describe "#run" do
-    let(:service) { described_class.new }
+    let(:project) { create(:project) }
+    let(:service) { described_class.new(project) }
 
     context "with work items needing GitHub issues" do
       let!(:work_items) do
         [
-          create(:work_item, type: "task", title: "Task 1", github_issue_number: nil),
-          create(:work_item, type: "task", title: "Task 2", github_issue_number: nil),
-          create(:work_item, type: "task", title: "Task 3", github_issue_number: nil)
+          create(:work_item, project: project, work_type: "task",
+                 payload: { title: "Task 1", description: "Description 1" }),
+          create(:work_item, project: project, work_type: "task",
+                 payload: { title: "Task 2", description: "Description 2" }),
+          create(:work_item, project: project, work_type: "task",
+                 payload: { title: "Task 3", description: "Description 3" })
         ]
       end
 
@@ -23,7 +27,7 @@ RSpec.describe IssueAgentService do
       it "updates work items with GitHub issue numbers" do
         service.run
         work_items.each(&:reload)
-        expect(work_items.map(&:github_issue_number)).to all(be_present)
+        expect(work_items.map { |wi| wi.payload["github_issue_number"] }).to all(be_present)
       end
 
       it "returns the count of created issues" do
@@ -52,19 +56,25 @@ RSpec.describe IssueAgentService do
 
     context "with work items that already have GitHub issues" do
       let!(:work_item) do
-        create(:work_item, type: "task", github_issue_number: 123)
+        create(:work_item, project: project, work_type: "task",
+               payload: { title: "Task", github_issue_number: 123 })
       end
 
       it "does not create duplicate issues" do
-        expect { service.run }.not_to change { work_item.reload.github_issue_number }
+        initial_number = work_item.payload["github_issue_number"]
+        service.run
+        expect(work_item.reload.payload["github_issue_number"]).to eq(initial_number)
       end
     end
 
     context "when an error occurs" do
-      let(:work_item) { create(:work_item, type: "task", github_issue_number: nil) }
+      let(:work_item) do
+        create(:work_item, project: project, work_type: "task",
+               payload: { title: "Task" })
+      end
 
       before do
-        allow(WorkItem).to receive(:tasks).and_return(WorkItem.where(id: work_item.id))
+        allow(project).to receive(:work_items).and_return(WorkItem.where(id: work_item.id))
         allow(work_item).to receive(:update!).and_raise(StandardError, "Test error")
       end
 

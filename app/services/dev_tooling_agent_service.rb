@@ -21,9 +21,7 @@ class DevToolingAgentService
   def run
     Rails.logger.info("Dev Tooling Agent: Starting repository audit")
 
-    # Read the agent prompt for context
-    prompt = read_prompt
-
+    # Stub: In production, this would call an LLM API with the prompt to analyze repository
     # Audit the repository for issues
     audit_results = audit_repository
 
@@ -52,13 +50,14 @@ class DevToolingAgentService
 
   private
 
-  def read_prompt
-    prompt_path = Rails.root.join("agents", "dev_tooling", "prompt.md")
-    File.read(prompt_path)
-  rescue Errno::ENOENT
-    Rails.logger.warn("Dev Tooling Agent: Prompt file not found at #{prompt_path}")
-    nil
-  end
+  # Future: When integrating with LLM, read prompt file here
+  # def read_prompt
+  #   prompt_path = Rails.root.join("agents", "dev_tooling", "prompt.md")
+  #   File.read(prompt_path)
+  # rescue Errno::ENOENT
+  #   Rails.logger.warn("Dev Tooling Agent: Prompt file not found at #{prompt_path}")
+  #   nil
+  # end
 
   def audit_repository
     # Stub implementation - in production, this would do comprehensive audits

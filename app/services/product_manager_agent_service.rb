@@ -6,26 +6,23 @@
 # an initial project scope with actionable work items.
 #
 # Example usage:
-#   project_brief = "A collaborative task management tool..."
-#   service = ProductManagerAgentService.new(project_brief)
+#   project = Project.find_by(slug: "my-project")
+#   service = ProductManagerAgentService.new(project)
 #   result = service.run
 #   # => { success: true, work_items_created: 5, ... }
 #
 class ProductManagerAgentService
-  attr_reader :project_brief, :gtm_positioning
+  attr_reader :project, :gtm_positioning
 
-  def initialize(project_brief, gtm_positioning: nil)
-    @project_brief = project_brief
+  def initialize(project, gtm_positioning: nil)
+    @project = project
     @gtm_positioning = gtm_positioning || read_gtm_positioning
   end
 
   def run
-    Rails.logger.info("Product Manager Agent: Creating work items from project brief")
+    Rails.logger.info("Product Manager Agent: Creating work items for project #{project.slug}")
 
-    # Read the agent prompt for context
-    prompt = read_prompt
-
-    # Stub: In production, this would call an LLM API to generate tasks
+    # Stub: In production, this would call an LLM API with the prompt to generate tasks
     # For now, create basic work items
     work_items = create_work_items
 
@@ -46,14 +43,6 @@ class ProductManagerAgentService
   end
 
   private
-
-  def read_prompt
-    prompt_path = Rails.root.join("agents", "product_manager", "prompt.md")
-    File.read(prompt_path)
-  rescue Errno::ENOENT
-    Rails.logger.warn("Product Manager Agent: Prompt file not found at #{prompt_path}")
-    nil
-  end
 
   def read_gtm_positioning
     positioning_path = Rails.root.join("docs", "product", "positioning.md")
@@ -106,9 +95,12 @@ class ProductManagerAgentService
 
     tasks.map do |task_attrs|
       WorkItem.create!(
-        type: "task",
-        title: task_attrs[:title],
-        description: task_attrs[:description],
+        project: project,
+        work_type: "task",
+        payload: {
+          title: task_attrs[:title],
+          description: task_attrs[:description]
+        },
         status: "pending",
         priority: task_attrs[:priority]
       )

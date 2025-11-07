@@ -453,4 +453,4 @@ For issues or questions about agents:
 
 ---
 
-*Last updated: #{Time.current.to_s(:long)}*
+*Last updated: November 7, 2025*

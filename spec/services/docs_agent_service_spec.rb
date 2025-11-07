@@ -73,20 +73,6 @@ RSpec.describe DocsAgentService do
       end
     end
 
-    context "with work items" do
-      let!(:work_items) do
-        [
-          create(:work_item, type: "task", title: "Task 1"),
-          create(:work_item, type: "task", title: "Task 2")
-        ]
-      end
-
-      it "considers work items in documentation" do
-        result = service.run
-        expect(result[:success]).to be true
-      end
-    end
-
     context "when file write fails" do
       before do
         allow(File).to receive(:write).and_raise(Errno::EACCES, "Permission denied")

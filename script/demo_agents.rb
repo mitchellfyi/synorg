@@ -49,6 +49,13 @@ puts "-" * 80
 puts PROJECT_BRIEF
 puts "-" * 80
 
+# Create a demo project
+puts "\nCreating demo project..."
+project = Project.find_or_create_by!(slug: "asyncflow-demo") do |p|
+  p.state = "draft"
+end
+puts "✓ Project created: #{project.slug} (state: #{project.state})"
+
 # 1. GTM Agent
 puts "\n\n1. Running GTM Agent..."
 puts "-" * 80
@@ -76,7 +83,7 @@ end
 puts "\n\n2. Running Product Manager Agent..."
 puts "-" * 80
 
-pm_service = ProductManagerAgentService.new(PROJECT_BRIEF)
+pm_service = ProductManagerAgentService.new(project)
 pm_result = pm_service.run
 
 if pm_result[:success]
@@ -87,8 +94,9 @@ if pm_result[:success]
   work_items = WorkItem.where(id: pm_result[:work_item_ids])
   puts "\n  Created work items:"
   work_items.each_with_index do |item, index|
-    puts "  #{index + 1}. [#{item.status.upcase}] #{item.title}"
-    puts "     Priority: #{item.priority}, Type: #{item.type}"
+    title = item.payload["title"] || "No title"
+    puts "  #{index + 1}. [#{item.status.upcase}] #{title}"
+    puts "     Priority: #{item.priority}, Type: #{item.work_type}"
   end
 else
   puts "✗ Product Manager Agent failed: #{pm_result[:error]}"
@@ -98,7 +106,7 @@ end
 puts "\n\n3. Running Issue Agent..."
 puts "-" * 80
 
-issue_service = IssueAgentService.new
+issue_service = IssueAgentService.new(project)
 issue_result = issue_service.run
 
 if issue_result[:success]
@@ -186,9 +194,14 @@ end
 successful_count = results.count { |_, success| success }
 puts "\n#{successful_count}/#{results.count} agents completed successfully"
 
+puts "\nProject state:"
+puts "- Project: #{project.slug} (#{project.state})"
+puts "- Work items created: #{project.work_items.count}"
+puts "- Files generated: docs/product/positioning.md, docs/stack.md, docs/setup.md"
+
 puts "\nNext steps:"
 puts "- Review generated files in docs/product/ and docs/"
-puts "- Check work_items in the database: WorkItem.all"
+puts "- Check work_items: WorkItem.where(project: Project.find_by(slug: 'asyncflow-demo'))"
 puts "- See docs/ai/agents-overview.md for detailed documentation"
 puts "- To re-run: bin/rails runner script/demo_agents.rb"
 

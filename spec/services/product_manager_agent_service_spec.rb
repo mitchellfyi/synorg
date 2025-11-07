@@ -4,8 +4,8 @@ require "rails_helper"
 
 RSpec.describe ProductManagerAgentService do
   describe "#run" do
-    let(:project_brief) { "A collaborative task management tool for remote teams" }
-    let(:service) { described_class.new(project_brief) }
+    let(:project) { create(:project) }
+    let(:service) { described_class.new(project) }
 
     it "returns a success response" do
       result = service.run
@@ -21,10 +21,11 @@ RSpec.describe ProductManagerAgentService do
       work_items = WorkItem.where(id: result[:work_item_ids])
 
       work_items.each do |item|
-        expect(item.type).to eq("task")
-        expect(item.title).to be_present
-        expect(item.description).to be_present
+        expect(item.work_type).to eq("task")
+        expect(item.payload["title"]).to be_present
+        expect(item.payload["description"]).to be_present
         expect(item.status).to eq("pending")
+        expect(item.project).to eq(project)
       end
     end
 

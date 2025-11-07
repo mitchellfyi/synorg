@@ -7,23 +7,25 @@
 # system and GitHub.
 #
 # Example usage:
-#   service = IssueAgentService.new
+#   project = Project.find_by(slug: "my-project")
+#   service = IssueAgentService.new(project)
 #   result = service.run
 #   # => { success: true, issues_created: 3, ... }
 #
 class IssueAgentService
-  attr_reader :github_client, :repository
+  attr_reader :project, :repository, :github_token
 
-  def initialize(repository: nil, github_token: nil)
+  def initialize(project, repository: nil, github_token: nil)
+    @project = project
     @repository = repository || ENV.fetch("GITHUB_REPOSITORY", "mitchellfyi/synorg")
     @github_token = github_token || ENV["GITHUB_TOKEN"]
   end
 
   def run
-    Rails.logger.info("Issue Agent: Starting GitHub issue creation")
+    Rails.logger.info("Issue Agent: Starting GitHub issue creation for project #{project.slug}")
 
-    # Find work items that need GitHub issues
-    work_items = WorkItem.tasks.without_github_issue
+    # Find work items that need GitHub issues (those with work_type=task and no GitHub issue)
+    work_items = project.work_items.where(work_type: "task").where("payload->>'github_issue_number' IS NULL")
 
     if work_items.empty?
       Rails.logger.info("Issue Agent: No work items found that need GitHub issues")
@@ -43,8 +45,8 @@ class IssueAgentService
     {
       success: true,
       issues_created: created_issues.count,
-      work_item_ids: created_issues.map { |wi| wi.id },
-      issue_numbers: created_issues.map { |wi| wi.github_issue_number },
+      work_item_ids: created_issues.map(&:id),
+      issue_numbers: created_issues.map { |wi| wi.payload["github_issue_number"] },
       message: "Successfully created #{created_issues.count} GitHub issues"
     }
   rescue StandardError => e
@@ -57,14 +59,6 @@ class IssueAgentService
 
   private
 
-  def read_prompt
-    prompt_path = Rails.root.join("agents", "issue", "prompt.md")
-    File.read(prompt_path)
-  rescue Errno::ENOENT
-    Rails.logger.warn("Issue Agent: Prompt file not found at #{prompt_path}")
-    nil
-  end
-
   def create_github_issues(work_items)
     # Stub implementation - in production, this would use Octokit
     # to actually create GitHub issues
@@ -72,8 +66,9 @@ class IssueAgentService
       # Simulate creating a GitHub issue
       simulated_issue_number = 1000 + index
 
-      # Update work item with the simulated GitHub issue number
-      work_item.update!(github_issue_number: simulated_issue_number)
+      # Update work item payload with the simulated GitHub issue number
+      updated_payload = work_item.payload.merge("github_issue_number" => simulated_issue_number)
+      work_item.update!(payload: updated_payload)
 
       Rails.logger.info("Issue Agent: Created issue ##{simulated_issue_number} for work item #{work_item.id}")
 
@@ -81,29 +76,31 @@ class IssueAgentService
     end
   end
 
-  def format_issue_body(work_item)
-    # Format the issue body with description and acceptance criteria
-    <<~MARKDOWN
-      ## Description
-      #{work_item.description}
-
-      ## Acceptance Criteria
-      - [ ] Implementation complete
-      - [ ] Tests added
-      - [ ] Documentation updated
-      - [ ] Code reviewed
-
-      ## Context
-      This work item was created by the Product Manager Agent.
-
-      ---
-
-      *Created by Issue Agent on #{Time.current.to_s(:long)}*
-      *Work Item ID: #{work_item.id}*
-    MARKDOWN
-  end
-
-  # Uncomment when ready to integrate with GitHub
+  # Future: Uncomment when ready to integrate with GitHub
+  # def format_issue_body(work_item)
+  #   title = work_item.payload["title"] || "Work Item #{work_item.id}"
+  #   description = work_item.payload["description"] || "No description provided"
+  #
+  #   <<~MARKDOWN
+  #     ## Description
+  #     #{description}
+  #
+  #     ## Acceptance Criteria
+  #     - [ ] Implementation complete
+  #     - [ ] Tests added
+  #     - [ ] Documentation updated
+  #     - [ ] Code reviewed
+  #
+  #     ## Context
+  #     This work item was created by the Product Manager Agent.
+  #
+  #     ---
+  #
+  #     *Created by Issue Agent*
+  #     *Work Item ID: #{work_item.id}*
+  #   MARKDOWN
+  # end
+  #
   # def setup_github_client
   #   require 'octokit'
   #
@@ -115,14 +112,17 @@ class IssueAgentService
   # end
   #
   # def create_real_github_issue(work_item)
+  #   title = work_item.payload["title"] || "Work Item #{work_item.id}"
+  #
   #   issue = @github_client.create_issue(
   #     @repository,
-  #     work_item.title,
+  #     title,
   #     format_issue_body(work_item),
   #     labels: ['task', 'agent-created']
   #   )
   #
-  #   work_item.update!(github_issue_number: issue.number)
+  #   updated_payload = work_item.payload.merge("github_issue_number" => issue.number)
+  #   work_item.update!(payload: updated_payload)
   #   work_item
   # rescue Octokit::Error => e
   #   Rails.logger.error("Failed to create GitHub issue for work item #{work_item.id}: #{e.message}")

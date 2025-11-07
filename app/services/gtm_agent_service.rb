@@ -22,10 +22,7 @@ class GtmAgentService
   def run
     Rails.logger.info("GTM Agent: Starting analysis of project brief")
 
-    # Read the agent prompt for context
-    prompt = read_prompt
-
-    # Stub: In production, this would call an LLM API
+    # Stub: In production, this would call an LLM API with the prompt
     # For now, generate a basic positioning document
     positioning_content = generate_positioning
 
@@ -53,13 +50,14 @@ class GtmAgentService
 
   private
 
-  def read_prompt
-    prompt_path = Rails.root.join("agents", "gtm", "prompt.md")
-    File.read(prompt_path)
-  rescue Errno::ENOENT
-    Rails.logger.warn("GTM Agent: Prompt file not found at #{prompt_path}")
-    nil
-  end
+  # Future: When integrating with LLM, read prompt file here
+  # def read_prompt
+  #   prompt_path = Rails.root.join("agents", "gtm", "prompt.md")
+  #   File.read(prompt_path)
+  # rescue Errno::ENOENT
+  #   Rails.logger.warn("GTM Agent: Prompt file not found at #{prompt_path}")
+  #   nil
+  # end
 
   def generate_positioning
     # Stub implementation - in production, this would use an LLM

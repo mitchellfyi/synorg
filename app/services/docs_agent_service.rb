@@ -23,9 +23,7 @@ class DocsAgentService
   def run
     Rails.logger.info("Docs Agent: Starting documentation generation")
 
-    # Read the agent prompt for context
-    prompt = read_prompt
-
+    # Stub: In production, this would call an LLM API with the prompt to generate docs
     # Generate or update documentation files
     files_updated = []
 
@@ -60,13 +58,14 @@ class DocsAgentService
 
   private
 
-  def read_prompt
-    prompt_path = Rails.root.join("agents", "docs", "prompt.md")
-    File.read(prompt_path)
-  rescue Errno::ENOENT
-    Rails.logger.warn("Docs Agent: Prompt file not found at #{prompt_path}")
-    nil
-  end
+  # Future: When integrating with LLM, read prompt file here
+  # def read_prompt
+  #   prompt_path = Rails.root.join("agents", "docs", "prompt.md")
+  #   File.read(prompt_path)
+  # rescue Errno::ENOENT
+  #   Rails.logger.warn("Docs Agent: Prompt file not found at #{prompt_path}")
+  #   nil
+  # end
 
   def read_gtm_positioning
     positioning_path = Rails.root.join("docs", "product", "positioning.md")
