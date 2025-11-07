@@ -216,34 +216,39 @@ class WebhookEventProcessor
   end
 
   def update_run_from_check_suite(check_suite)
-    # Similar to workflow_run processing
+    # Check suites are GitHub's way of grouping related checks
+    # For now, we just log them as the mapping to runs is complex
+    # In production, you'd need a strategy to link check suites to runs
+    # (e.g., via PR head SHA, commit SHA, or check suite metadata)
     conclusion = check_suite["conclusion"]
-
-    # Find the associated run
-    # This would need a better mapping strategy in production
     head_sha = check_suite["head_sha"]
 
-    return unless head_sha
+    Rails.logger.info(
+      "Check suite #{check_suite['id']} completed: " \
+      "conclusion=#{conclusion}, head_sha=#{head_sha}"
+    )
 
-    outcome = case conclusion
-    when "success"
-      "success"
-    when "failure", "timed_out", "cancelled"
-      "failure"
-    else
-      nil
-    end
-
-    # This is a placeholder - in production you'd need a better way to link check suites to runs
-    Rails.logger.info("Check suite #{check_suite['id']} completed with conclusion: #{conclusion}")
+    # TODO: Implement run linking strategy when requirements are clearer
+    # Possible approaches:
+    # 1. Add head_sha field to runs table
+    # 2. Link via pull request association
+    # 3. Store check suite ID in run metadata
+    true
   end
+
+  # GitHub issue reference patterns
+  # Matches common patterns like "Fixes #123", "Closes #456", etc.
+  ISSUE_REFERENCE_PATTERN = /
+    (?:fix|fixes|fixed|close|closes|closed|resolve|resolves|resolved)
+    \s+\#(\d+)
+  /ix
 
   def extract_issue_number_from_pr(pull_request)
     body = pull_request["body"] || ""
 
-    # Look for common patterns like "Fixes #123", "Closes #123", etc.
-    match = body.match(/(fix|fixes|close|closes|resolve|resolves)\s+#(\d+)/i)
+    # Look for common issue reference patterns
+    match = body.match(ISSUE_REFERENCE_PATTERN)
 
-    match ? match[2].to_i : nil
+    match ? match[1].to_i : nil
   end
 end
