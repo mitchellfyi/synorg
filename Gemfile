@@ -72,6 +72,9 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 
+  # Git hooks manager [https://github.com/evilmartians/lefthook]
+  gem "lefthook", require: false
+
   # N+1 query detection [https://github.com/flyerhzm/bullet]
   # Note: Commented out until Bullet supports Rails edge
   # gem "bullet"

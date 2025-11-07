@@ -218,8 +218,16 @@ git checkout -b feature/my-feature
 # Stage changes
 git add .
 
-# Commit with message
-git commit -m "Add feature description"
+# Commit with message (Conventional Commits format)
+git commit -m "feat: add new feature description"
+git commit -m "fix: resolve bug in component"
+git commit -m "docs: update setup guide"
+
+# Commit types: feat, fix, docs, style, refactor, test, chore, ci, build, perf, revert
+
+# Bypass git hooks (emergency only!)
+git commit --no-verify -m "emergency fix"
+git push --no-verify
 
 # Push to remote
 git push origin feature/my-feature
@@ -227,6 +235,25 @@ git push origin feature/my-feature
 # Rebase on main
 git fetch origin
 git rebase origin/main
+```
+
+## Git Hooks (Lefthook)
+
+```bash
+# Install hooks (run after cloning or when lefthook.yml changes)
+lefthook install
+
+# Run hooks manually
+lefthook run pre-commit    # Run pre-commit checks
+lefthook run commit-msg    # Validate commit message
+lefthook run pre-push      # Run full test suite
+
+# Uninstall hooks
+lefthook uninstall
+
+# Skip hooks (use sparingly!)
+git commit --no-verify     # Skip pre-commit and commit-msg
+git push --no-verify       # Skip pre-push
 ```
 
 ## Debugging

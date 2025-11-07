@@ -119,6 +119,14 @@ synorg/
 - **JavaScript**: ESLint with flat config
 - **Formatting**: Prettier for JS/TS
 - **Type Safety**: TypeScript with noEmit
+- **Git Hooks**: Lefthook for pre-commit, commit-msg, and pre-push automation
+
+### Git Hooks (Lefthook)
+- **Pre-commit**: Auto-format and lint staged files (RuboCop, ERB Lint, ESLint, Prettier)
+- **Commit-msg**: Enforce Conventional Commits with commitlint
+- **Pre-push**: Run full test suite and linters before pushing
+- Configured in `lefthook.yml`
+- See `docs/git-hooks.md` for details
 
 ### Security
 - Brakeman static analysis (0 warnings)

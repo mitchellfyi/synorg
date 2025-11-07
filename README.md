@@ -36,6 +36,23 @@ This will:
 - Install JavaScript dependencies
 - Create and migrate databases
 - Prepare test database
+- Install Git hooks (Lefthook)
+
+### Git Hooks
+
+Git hooks are automatically installed via Lefthook to ensure code quality:
+
+- **Pre-commit**: Auto-formats and lints staged files (RuboCop, ERB Lint, ESLint, Prettier)
+- **Commit-msg**: Enforces Conventional Commits format (`feat:`, `fix:`, etc.)
+- **Pre-push**: Runs full test suite and linters before pushing
+
+To bypass hooks in emergencies:
+```bash
+git commit --no-verify
+git push --no-verify
+```
+
+See `docs/commands.md` for more details on git hooks.
 
 ### Running the App
 
