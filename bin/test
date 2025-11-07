@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Run RSpec tests
+
+set -e
+
+bundle exec rspec "$@"

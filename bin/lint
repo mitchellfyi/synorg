@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Run all linters
+
+set -e
+
+echo "Running RuboCop..."
+bin/rubocop
+
+echo "Running ERB Lint..."
+bundle exec erblint --lint-all
+
+echo "Running ESLint..."
+npm run lint:js
+
+echo "Running Prettier check..."
+npm run format:check
+
+echo "Running TypeScript type check..."
+npm run typecheck
+
+echo "All linters passed!"

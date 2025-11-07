@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Run all formatters
+
+set -e
+
+echo "Running RuboCop auto-correct..."
+bin/rubocop -A
+
+echo "Running ERB Lint auto-correct..."
+bundle exec erblint --lint-all --autocorrect
+
+echo "Running Prettier..."
+npm run format:fix
+
+echo "All formatters applied!"
