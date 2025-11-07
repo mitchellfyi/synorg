@@ -104,10 +104,11 @@ class WebhookEventProcessor
   end
 
   def create_or_update_work_item_from_issue(issue)
-    work_item = project.work_items.find_or_initialize_by(
-      work_type: "issue",
-      payload: { issue_number: issue["number"] }
-    )
+    # Use PostgreSQL JSON query to find existing work item
+    work_item = project.work_items
+      .where(work_type: "issue")
+      .where("payload->>'issue_number' = ?", issue["number"].to_s)
+      .first_or_initialize
 
     work_item.payload = {
       issue_number: issue["number"],
@@ -125,10 +126,10 @@ class WebhookEventProcessor
   end
 
   def mark_work_item_completed(issue)
-    work_item = project.work_items.find_by(
-      work_type: "issue",
-      payload: { issue_number: issue["number"] }
-    )
+    work_item = project.work_items
+      .where(work_type: "issue")
+      .where("payload->>'issue_number' = ?", issue["number"].to_s)
+      .first
 
     return unless work_item
 
@@ -142,10 +143,10 @@ class WebhookEventProcessor
 
     return unless issue_number
 
-    work_item = project.work_items.find_by(
-      work_type: "issue",
-      payload: { issue_number: issue_number }
-    )
+    work_item = project.work_items
+      .where(work_type: "issue")
+      .where("payload->>'issue_number' = ?", issue_number.to_s)
+      .first
 
     return unless work_item
     return unless work_item.assigned_agent
@@ -166,10 +167,10 @@ class WebhookEventProcessor
 
     return unless issue_number
 
-    work_item = project.work_items.find_by(
-      work_type: "issue",
-      payload: { issue_number: issue_number }
-    )
+    work_item = project.work_items
+      .where(work_type: "issue")
+      .where("payload->>'issue_number' = ?", issue_number.to_s)
+      .first
 
     return unless work_item
 
