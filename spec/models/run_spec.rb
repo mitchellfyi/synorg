@@ -16,7 +16,7 @@ RSpec.describe Run, type: :model do
   describe "scopes" do
     let(:agent) { Agent.create!(key: "test", name: "Test") }
     let(:project) { Project.create!(slug: "test") }
-    let(:work_item) { WorkItem.create!(project: project, type: "test", status: "pending") }
+    let(:work_item) { WorkItem.create!(project: project, work_type: "test", status: "pending") }
     let!(:successful_run) { described_class.create!(agent: agent, work_item: work_item, outcome: "success") }
     let!(:failed_run) { described_class.create!(agent: agent, work_item: work_item, outcome: "failure") }
     let!(:in_progress_run) { described_class.create!(agent: agent, work_item: work_item, started_at: Time.current) }
