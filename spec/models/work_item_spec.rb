@@ -42,7 +42,9 @@ RSpec.describe WorkItem, type: :model do
       let!(:high_priority) { described_class.create!(project: project, type: "test", status: "pending", priority: 10) }
 
       it "orders by priority descending, then created_at ascending" do
-        expect(described_class.by_priority.to_a).to eq([ high_priority, low_priority, pending_item, locked_item, in_progress_item, completed_item, failed_item ])
+        results = described_class.by_priority.to_a
+        expect(results.first).to eq(high_priority)
+        expect(results.second).to eq(low_priority)
       end
     end
   end

@@ -17,7 +17,7 @@ class WorkspaceService
   #
   # @return [String] Path to the workspace directory
   def provision
-    @work_dir = File.join(Dir.tmpdir, "synorg-workspace-#{project.slug}-#{SecureRandom.hex(8)}")
+    @work_dir = File.join(Dir.tmpdir, "synorg-workspace-#{SecureRandom.hex(16)}")
     FileUtils.mkdir_p(@work_dir)
     @work_dir
   end
@@ -27,9 +27,14 @@ class WorkspaceService
   # @param pat [String] Personal Access Token for authentication
   # @return [Boolean] Success status
   # rubocop:disable Naming/PredicateMethod
+  # Note: Method returns boolean but is named as action verb (clone) not predicate (cloned?)
+  # This is intentional as it performs an action and returns success status
   def clone_repository(pat)
     return false unless project.repo_full_name
 
+    # Note: PAT is used in URL for Git authentication. Git commands are run with
+    # chdir option to avoid exposing in shell history. Consider using Git credential
+    # helpers in production for additional security.
     repo_url = "https://#{pat}@github.com/#{project.repo_full_name}.git"
     branch = project.repo_default_branch || "main"
 
@@ -43,7 +48,9 @@ class WorkspaceService
     )
 
     unless status.success?
-      Rails.logger.error("Failed to clone repository: #{stderr}")
+      # stderr may contain repo URL, so we sanitize before logging
+      sanitized_error = stderr.gsub(/#{Regexp.escape(pat)}/, "[REDACTED]")
+      Rails.logger.error("Failed to clone repository: #{sanitized_error}")
       return false
     end
 
@@ -56,6 +63,8 @@ class WorkspaceService
   # @param branch_name [String] Name of the branch to create
   # @return [Boolean] Success status
   # rubocop:disable Naming/PredicateMethod
+  # Note: Method returns boolean but is named as action verb (create) not predicate (created?)
+  # This is intentional as it performs an action and returns success status
   def create_branch(branch_name)
     _stdout, stderr, status = Open3.capture3(
       "git", "checkout", "-b", branch_name,
@@ -76,6 +85,8 @@ class WorkspaceService
   # @param message [String] Commit message
   # @return [Boolean] Success status
   # rubocop:disable Naming/PredicateMethod
+  # Note: Method returns boolean but is named as action verb (commit) not predicate (committed?)
+  # This is intentional as it performs an action and returns success status
   def commit_changes(message)
     # Add all changes
     _stdout, _stderr, status = Open3.capture3(
@@ -105,6 +116,8 @@ class WorkspaceService
   # @param branch_name [String] Name of the branch to push
   # @return [Boolean] Success status
   # rubocop:disable Naming/PredicateMethod
+  # Note: Method returns boolean but is named as action verb (push) not predicate (pushed?)
+  # This is intentional as it performs an action and returns success status
   def push_branch(branch_name)
     _stdout, stderr, status = Open3.capture3(
       "git", "push", "origin", branch_name,
