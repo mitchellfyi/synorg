@@ -35,10 +35,18 @@ class WorkspaceService
     # Note: PAT is used in URL for Git authentication. Git commands are run with
     # chdir option to avoid exposing in shell history. Consider using Git credential
     # helpers in production for additional security.
-    repo_url = "https://#{pat}@github.com/#{project.repo_full_name}.git"
+    repo_url = "https://github.com/#{project.repo_full_name}.git"
     branch = project.repo_default_branch || "main"
 
+    # Create a temporary askpass script to provide the PAT securely
+    askpass_path = File.join(@work_dir, "git-askpass.sh")
+    File.write(askpass_path, "#!/bin/sh\necho '#{pat}'\n")
+    FileUtils.chmod("+x", askpass_path)
+
+    env = { "GIT_ASKPASS" => askpass_path }
+
     _stdout, stderr, status = Open3.capture3(
+      env,
       "git", "clone",
       "--branch", branch,
       "--depth", "1",
