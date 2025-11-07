@@ -1,0 +1,27 @@
+# RuboCop configuration with GitHub preset
+inherit_gem:
+  rubocop-github:
+    - config/default.yml
+
+# Also inherit Rails Omakase for Rails-specific rules
+require:
+  - rubocop-rails-omakase
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'db/schema.rb'
+    - 'db/queue_schema.rb'
+    - 'db/cache_schema.rb'
+    - 'db/cable_schema.rb'
+    - 'bin/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - 'public/**/*'
+    - 'storage/**/*'
+
+# Overrides can go here if needed
+
