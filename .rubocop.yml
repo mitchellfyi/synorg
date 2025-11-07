@@ -3,10 +3,6 @@ inherit_gem:
   rubocop-github:
     - config/default.yml
 
-# Also inherit Rails Omakase for Rails-specific rules
-require:
-  - rubocop-rails-omakase
-
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.2

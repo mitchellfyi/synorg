@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 source "https://rubygems.org"
 
 # Use edge Rails from GitHub main branch
@@ -26,9 +27,9 @@ gem "jbuilder"
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
+gem "solid_cable"
 gem "solid_cache"
 gem "solid_queue"
-gem "solid_cable"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
@@ -62,9 +63,9 @@ group :development, :test do
   gem "erb_lint", require: false
 
   # RSpec for testing [https://rspec.info]
-  gem "rspec-rails", "~> 7.0"
   gem "factory_bot_rails"
   gem "faker"
+  gem "rspec-rails", "~> 7.0"
 end
 
 group :development do
