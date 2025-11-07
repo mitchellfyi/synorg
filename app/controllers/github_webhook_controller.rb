@@ -63,20 +63,21 @@ class GithubWebhookController < ApplicationController
   # Find the project by verifying the webhook signature
   # Tries each project's webhook secret until one matches
   #
+  # NOTE: This implementation is acceptable for small to medium deployments.
+  # For production at scale, consider:
+  # 1. Using a custom header (e.g., X-Project-ID) to identify the project
+  # 2. Using webhook URLs with project identifiers (e.g., /github/webhook/:project_id)
+  # 3. Caching webhook secrets in memory (Redis/Memcached)
+  # 4. Using a database index on webhook_secret_name
+  #
   # @param request_body [String] The raw request body
   # @param signature [String] The X-Hub-Signature-256 header value
   # @return [Project, nil] The project if signature matches, nil otherwise
   def find_project_by_signature(request_body, signature)
     return nil unless signature
 
-    # In production, you'd want to optimize this by:
-    # 1. Using a custom header to identify the project
-    # 2. Caching webhook secrets
-    # 3. Indexing projects by webhook_secret_name
-    Project.find_each do |project|
-      next unless project.webhook_secret_name
-
-      # Get the secret from Rails credentials
+    Project.where.not(webhook_secret_name: nil).find_each do |project|
+      # Get the secret from Rails credentials or environment
       secret = fetch_secret(project.webhook_secret_name)
       next unless secret
 

@@ -151,7 +151,8 @@ class WebhookEventProcessor
     return unless work_item
     return unless work_item.assigned_agent
 
-    run = work_item.runs.find_or_create_by!(agent: work_item.assigned_agent) do |r|
+    # Find existing run or create new one, handling potential race conditions
+    run = work_item.runs.where(agent: work_item.assigned_agent).first_or_create do |r|
       r.started_at = Time.current
     end
 
@@ -210,7 +211,7 @@ class WebhookEventProcessor
 
     run.update!(
       outcome: outcome,
-      finished_at: workflow_run["updated_at"] || Time.current
+      finished_at: workflow_run["updated_at"] ? Time.parse(workflow_run["updated_at"]) : Time.current
     )
   end
 
