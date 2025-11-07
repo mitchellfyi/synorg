@@ -3,7 +3,7 @@ class CreateWorkItems < ActiveRecord::Migration[8.1]
   def change
     create_table :work_items do |t|
       t.references :project, null: false, foreign_key: true
-      t.string :type, null: false
+      t.string :work_type, null: false
       t.json :payload, default: {}
       t.string :status, null: false, default: "pending"
       t.integer :priority, default: 0
