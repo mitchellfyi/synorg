@@ -1,6 +1,100 @@
 # AI Agent Roles & Conventions
 
-This document defines the roles, specializations, and conventions for AI agents working on the Synorg codebase.
+This document defines the roles, specializations, and conventions for AI agents working on the Synorg codebase. It serves as the single source of truth for agent responsibilities, the Operating Loop, conventions, and safety rails.
+
+## Coding Agent Operating Loop
+
+Work in tiny loops: **clarify → look up official docs → research best approach → change → lint/format → test → self-review → document → run local CI → sync with `main` → commit (Conventional Commits) → sync with `main` again → reflect.** Keep the codebase readable, maintainable, accessible, and secure. **Re-read this loop at the start of every task and roughly every ~50k tokens used.**
+
+References:
+
+- Trunk-based development: [Atlassian](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development), [Martin Fowler](https://martinfowler.com/articles/continuousIntegration.html)
+- [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
+- [Diátaxis documentation framework](https://diataxis.fr/start-here/)
+
+### Ground Rules
+
+- **Small branches and PRs**: Keep `main` releasable at all times. Use feature flags when needed.
+- **Conventional Commits**: All commits follow the format: `feat:`, `fix:`, `chore:`, `docs:`, etc.
+- **DRY sensibly**: Apply the **rule of three** before extracting. Don't over-abstract prematurely.
+- **SOLID principles**: Apply where it improves testability and extensibility.
+- **Update docs as you go**: Follow Diátaxis split (tutorials/how-tos/reference/explanation).
+
+References:
+
+- [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
+- [SOLID principles](https://en.wikipedia.org/wiki/SOLID)
+
+### Quality Bar – Every Change
+
+- **Lint/format before tests**: Keep warnings at zero.
+- **Tests first or concurrent**: Many small unit tests, targeted integration tests, few end-to-end tests. Keep suites fast and deterministic.
+- **Refactor in tiny steps**: Behaviour-preserving incremental changes only.
+
+### Security, Privacy, Reliability
+
+- Design with **OWASP Top 10** in mind
+- Use the **OWASP Cheat Sheet Series** and secure coding checklist
+- Never commit secrets
+- Validate all inputs
+- Encode all outputs
+- Follow least privilege principle
+
+References:
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/index.html)
+
+### Accessibility, UX, DevEx
+
+- Aim for **WCAG 2.2 AA** compliance
+- Sanity-check UX against **Nielsen's 10 usability heuristics**
+
+References:
+
+- [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
+- [Nielsen's 10 Usability Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/)
+
+### Research and Consistency
+
+- **Before implementing**: Read the latest **primary docs** for the tool you're touching and one reputable guide. Link sources in the PR.
+- **Conform to existing patterns**: If deviating, explain why and migrate incrementally.
+
+### Keep Your Branch in Sync with `main`
+
+**Before each commit**: Fetch and integrate the latest `main` into your feature branch:
+
+- Prefer linear history: `git fetch origin && git rebase origin/main`
+- Alternatively merge if your team prefers: `git fetch origin && git merge origin/main`
+
+**After the commit (before push)**: Repeat the sync quickly to catch new upstream changes. Resolve conflicts, **re-run local CI**, then push (use `--force-with-lease` if you rebased).
+
+References:
+
+- [git-rebase](https://git-scm.com/docs/git-rebase)
+- [Atlassian rebase guide](https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase)
+- [Merge vs rebase](https://www.atlassian.com/git/tutorials/merging-vs-rebasing)
+- [git-pull with rebase](https://git-scm.com/docs/git-pull)
+
+### Run CI Locally Before You Push
+
+- Use pre-commit/pre-push hooks to run the same commands CI runs (lint/format/tests/type-checks)
+- Optionally simulate **GitHub Actions** locally with [`act`](https://github.com/nektos/act)
+- **Keep PRs green** – do not merge red builds
+
+References:
+
+- [GitHub Actions events](https://docs.github.com/actions/learn-github-actions/events-that-trigger-workflows)
+- [GitHub-hosted runners](https://docs.github.com/actions/using-github-hosted-runners/about-github-hosted-runners)
+
+## How to Stay in Context
+
+- Re-read this Operating Loop at the start of every task
+- Check existing documentation in `/docs` before making assumptions
+- Review `AGENTS.md` (this file) for role-specific conventions
+- Consult `.github/copilot-instructions.md` for tool-specific guidance
+- Reference upstream documentation for all technologies you're using
+- Re-read roughly every ~50k tokens to stay aligned with conventions
 
 ## Core Principles
 
@@ -20,6 +114,7 @@ All AI agents working on this repository must adhere to the following principles
 **Specialization**: Development infrastructure, build tooling, CI/CD, linters, formatters
 
 **Responsibilities**:
+
 - Setting up and maintaining build systems
 - Configuring linters and formatters (RuboCop, ESLint, Prettier, ERB Lint)
 - Managing CI/CD pipelines
@@ -27,6 +122,7 @@ All AI agents working on this repository must adhere to the following principles
 - Maintaining documentation for development workflows
 
 **Key Practices**:
+
 - Use official installers and maintained presets
 - Keep defaults conventional
 - Document non-obvious choices under `/docs`
@@ -38,6 +134,7 @@ All AI agents working on this repository must adhere to the following principles
 **Specialization**: Ruby on Rails application development, database design, API development
 
 **Responsibilities**:
+
 - Developing Rails models, controllers, and services
 - Database migrations and schema design
 - Background job implementation with Solid Queue
@@ -45,6 +142,7 @@ All AI agents working on this repository must adhere to the following principles
 - Performance optimization
 
 **Key Practices**:
+
 - Follow Rails conventions and best practices
 - Use edge Rails features appropriately
 - Write comprehensive RSpec tests
@@ -56,6 +154,7 @@ All AI agents working on this repository must adhere to the following principles
 **Specialization**: JavaScript/TypeScript, Tailwind CSS, Hotwire (Turbo/Stimulus)
 
 **Responsibilities**:
+
 - Building interactive UI components
 - Implementing Stimulus controllers
 - Styling with Tailwind CSS
@@ -63,6 +162,7 @@ All AI agents working on this repository must adhere to the following principles
 - Ensuring accessibility and responsive design
 
 **Key Practices**:
+
 - Use TypeScript for type safety
 - Follow ESLint and Prettier configurations
 - Keep JavaScript bundle sizes minimal
@@ -74,6 +174,7 @@ All AI agents working on this repository must adhere to the following principles
 **Specialization**: Security scanning, vulnerability assessment, secure coding practices
 
 **Responsibilities**:
+
 - Running Brakeman and bundler-audit
 - Reviewing code for security vulnerabilities
 - Ensuring credentials are not committed
@@ -81,6 +182,7 @@ All AI agents working on this repository must adhere to the following principles
 - Keeping dependencies updated
 
 **Key Practices**:
+
 - Run security scans before every commit
 - Never commit secrets or credentials
 - Use Rails credentials for sensitive data
@@ -116,6 +218,7 @@ All AI agents working on this repository must adhere to the following principles
 ## Code Review Standards
 
 All code should be:
+
 - **Readable**: Clear and self-documenting
 - **Tested**: Covered by appropriate tests
 - **Secure**: Free of common vulnerabilities
@@ -133,22 +236,26 @@ All code should be:
 ## Tool Configuration
 
 ### Ruby/Rails
+
 - **Ruby Version**: Defined in `.ruby-version`
 - **Linter**: RuboCop with GitHub preset
 - **Test Framework**: RSpec only (no Minitest)
 - **Background Jobs**: Solid Queue
 
 ### JavaScript/TypeScript
+
 - **Linter**: ESLint with flat config
 - **Formatter**: Prettier
 - **Type Checker**: TypeScript with `noEmit: true`
 - **Bundler**: esbuild
 
 ### CSS
+
 - **Framework**: Tailwind CSS
 - **Build**: Tailwind CLI
 
 ### Database
+
 - **Development**: PostgreSQL
 - **Test**: PostgreSQL
 - **Production**: PostgreSQL
@@ -156,6 +263,7 @@ All code should be:
 ## Continuous Integration
 
 All PRs must pass CI checks:
+
 - RuboCop linting
 - ERB Lint
 - ESLint
@@ -166,9 +274,64 @@ All PRs must pass CI checks:
 - RSpec test suite
 - Playwright smoke tests (if present)
 
+## Synorg Stack & Context
+
+When generating code, documentation, or follow-up tasks, **always adapt to this specific codebase**:
+
+### Technology Stack
+
+- **Framework**: Ruby on Rails 8.1.1 (edge)
+- **Language**: Ruby 3.2.3
+- **Database**: PostgreSQL 16+
+- **Background Jobs**: Solid Queue
+- **Frontend CSS**: Tailwind CSS v4
+- **Frontend JS**: TypeScript with esbuild
+- **Interactive UI**: Hotwire (Turbo & Stimulus)
+- **Testing**: RSpec
+
+### Development Tools
+
+- **Ruby Linting**: RuboCop (GitHub preset)
+- **ERB Linting**: erb_lint
+- **JavaScript Linting**: ESLint (flat config)
+- **Formatting**: Prettier
+- **Security Scanning**: Brakeman, bundler-audit
+- **Git Hooks**: Lefthook
+- **Commit Messages**: Conventional Commits (enforced via commitlint)
+
+### Key Commands
+
+- `bin/setup` - Idempotent setup script
+- `bin/dev` - Start all services (Rails, Solid Queue, asset watchers)
+- `bin/test` - Run RSpec test suite
+- `bin/lint` - Run all linters
+- `bin/format` - Auto-fix linting issues
+- `bin/brakeman` - Security scan
+- `bin/bundler-audit` - Dependency vulnerability check
+
+### Documentation Locations
+
+- `/docs` - Detailed documentation
+- `AGENTS.md` - This file (agent conventions)
+- `.github/copilot-instructions.md` - GitHub Copilot instructions
+- `README.md` - Getting started guide
+- `docs/ai/` - AI-specific documentation and prompts
+
+### Upstream Documentation References
+
+When working on this codebase, consult these primary sources:
+
+- [Rails Guides](https://guides.rubyonrails.org/)
+- [Solid Queue](https://github.com/rails/solid_queue)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [Hotwire](https://hotwired.dev/)
+- [RSpec](https://rspec.info/)
+- [TypeScript](https://www.typescriptlang.org/docs/)
+
 ## Getting Help
 
 If you're stuck or uncertain:
+
 1. Check the documentation in `/docs`
 2. Review this AGENTS.md file
 3. Check GitHub Copilot custom instructions in `.github/copilot-instructions.md`
