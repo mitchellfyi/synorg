@@ -4,49 +4,47 @@ require "rails_helper"
 
 RSpec.describe WorkItem, type: :model do
   describe "validations" do
-    it "validates presence of type" do
-      work_item = described_class.new(title: "Test", status: "pending")
-      expect(work_item).not_to be_valid
-      expect(work_item.errors[:type]).to include("can't be blank")
-    end
+    it { is_expected.to validate_presence_of(:work_type) }
+    it { is_expected.to validate_presence_of(:status) }
+  end
 
-    it "validates presence of title" do
-      work_item = described_class.new(type: "task", status: "pending")
-      expect(work_item).not_to be_valid
-      expect(work_item.errors[:title]).to include("can't be blank")
-    end
-
-    it "validates presence of status" do
-      work_item = described_class.new(type: "task", title: "Test")
-      expect(work_item).not_to be_valid
-      expect(work_item.errors[:status]).to include("can't be blank")
-    end
+  describe "associations" do
+    it { is_expected.to belong_to(:project) }
+    it { is_expected.to belong_to(:assigned_agent).optional }
+    it { is_expected.to belong_to(:locked_by_agent).optional }
+    it { is_expected.to have_many(:runs).dependent(:destroy) }
   end
 
   describe "scopes" do
-    let!(:task1) { create(:work_item, type: "task", status: "pending") }
-    let!(:task2) { create(:work_item, type: "task", status: "completed") }
-    let!(:bug) { create(:work_item, type: "bug", status: "pending") }
-
-    describe ".tasks" do
-      it "returns only work items with type task" do
-        expect(described_class.tasks).to contain_exactly(task1, task2)
-      end
-    end
+    let(:project) { Project.create!(slug: "test") }
+    let!(:pending_item) { described_class.create!(project: project, work_type: "test", status: "pending") }
+    let!(:in_progress_item) { described_class.create!(project: project, work_type: "test", status: "in_progress") }
+    let!(:completed_item) { described_class.create!(project: project, work_type: "test", status: "completed") }
+    let!(:failed_item) { described_class.create!(project: project, work_type: "test", status: "failed") }
+    let!(:locked_item) { described_class.create!(project: project, work_type: "test", status: "pending", locked_at: Time.current) }
 
     describe ".pending" do
-      it "returns only work items with status pending" do
-        expect(described_class.pending).to contain_exactly(task1, bug)
+      it "returns only pending work items" do
+        expect(described_class.pending).to include(pending_item, locked_item)
+        expect(described_class.pending).not_to include(in_progress_item, completed_item, failed_item)
       end
     end
 
-    describe ".without_github_issue" do
-      let!(:task_with_issue) { create(:work_item, type: "task", github_issue_number: 123) }
+    describe ".unlocked" do
+      it "returns only unlocked work items" do
+        expect(described_class.unlocked).to include(pending_item, in_progress_item, completed_item, failed_item)
+        expect(described_class.unlocked).not_to include(locked_item)
+      end
+    end
 
-      it "returns only work items without GitHub issue numbers" do
-        result = described_class.without_github_issue
-        expect(result).to include(task1, task2, bug)
-        expect(result).not_to include(task_with_issue)
+    describe ".by_priority" do
+      let!(:low_priority) { described_class.create!(project: project, work_type: "test", status: "pending", priority: 1) }
+      let!(:high_priority) { described_class.create!(project: project, work_type: "test", status: "pending", priority: 10) }
+
+      it "orders by priority descending, then created_at ascending" do
+        results = described_class.by_priority.to_a
+        expect(results.first).to eq(high_priority)
+        expect(results.second).to eq(low_priority)
       end
     end
   end

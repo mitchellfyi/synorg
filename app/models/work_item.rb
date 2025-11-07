@@ -1,10 +1,18 @@
 # frozen_string_literal: true
+
 class WorkItem < ApplicationRecord
-  validates :type, presence: true
-  validates :title, presence: true
+  belongs_to :project
+  belongs_to :assigned_agent, class_name: "Agent", optional: true
+  belongs_to :locked_by_agent, class_name: "Agent", optional: true
+  has_many :runs, dependent: :destroy
+
+  validates :work_type, presence: true
   validates :status, presence: true
 
-  scope :tasks, -> { where(type: "task") }
   scope :pending, -> { where(status: "pending") }
-  scope :without_github_issue, -> { where(github_issue_number: nil) }
+  scope :in_progress, -> { where(status: "in_progress") }
+  scope :completed, -> { where(status: "completed") }
+  scope :failed, -> { where(status: "failed") }
+  scope :unlocked, -> { where(locked_at: nil) }
+  scope :by_priority, -> { order(priority: :desc, created_at: :asc) }
 end

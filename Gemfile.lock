@@ -1,6 +1,8 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    aasm (5.5.2)
+      concurrent-ruby (~> 1.0)
     action_text-trix (2.1.15)
       railties
     actioncable (8.1.1)
@@ -349,6 +351,8 @@ GEM
       ffi (~> 1.12)
       logger
     securerandom (0.4.1)
+    shoulda-matchers (6.5.0)
+      activesupport (>= 5.2.0)
     smart_properties (1.17.0)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
@@ -419,6 +423,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  aasm
   bootsnap
   brakeman
   bullet
@@ -440,6 +445,7 @@ DEPENDENCIES
   rspec-rails (~> 8.0)
   rubocop-github
   rubocop-rails-omakase
+  shoulda-matchers (~> 6.0)
   solid_cable
   solid_cache
   solid_queue
