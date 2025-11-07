@@ -100,7 +100,7 @@ class GithubService
   end
 
   def execute_request(uri, request)
-    request["Authorization"] = "token #{token}"
+    request["Authorization"] = "Bearer #{token}"
     request["Accept"] = "application/vnd.github.v3+json"
     request["Content-Type"] = "application/json"
 
