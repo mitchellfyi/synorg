@@ -1,6 +1,6 @@
 # Synorg
 
-A modern Rails application built with edge Rails, PostgreSQL, Solid Queue, Tailwind CSS, and esbuild.
+A modern Rails application built with Rails 8.1, PostgreSQL, Solid Queue, Tailwind CSS, and esbuild.
 
 ## Quick Start
 
@@ -115,7 +115,7 @@ bin/bundler-audit     # Check for vulnerable gems
 ## Technology Stack
 
 ### Backend
-- **Framework**: Ruby on Rails 8.2.0.alpha (edge)
+- **Framework**: Ruby on Rails 8.1.1
 - **Language**: Ruby 3.2.3
 - **Database**: PostgreSQL
 - **Background Jobs**: Solid Queue

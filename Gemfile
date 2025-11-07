@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 source "https://rubygems.org"
 
-# Use edge Rails from GitHub main branch
-gem "rails", github: "rails/rails", branch: "main"
+# Use latest stable Rails version
+gem "rails", "~> 8.1.1"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
@@ -76,6 +76,5 @@ group :development do
   gem "lefthook", require: false
 
   # N+1 query detection [https://github.com/flyerhzm/bullet]
-  # Note: Commented out until Bullet supports Rails edge
-  # gem "bullet"
+  gem "bullet"
 end

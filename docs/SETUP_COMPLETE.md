@@ -1,6 +1,6 @@
 # Setup Completion Summary
 
-## Project: Synorg - Rails Edge Application
+## Project: Synorg - Rails Application
 
 **Date**: November 7, 2025  
 **Status**: ✅ Complete
@@ -9,9 +9,9 @@
 
 ## What Was Built
 
-A complete Rails edge application from scratch with:
+A complete Rails application from scratch with:
 
-1. **Rails 8.2.0.alpha** from GitHub main branch
+1. **Rails 8.1.1** (latest stable version)
 2. **PostgreSQL** database with multi-database support
 3. **Solid Queue** for background job processing
 4. **Tailwind CSS v4** for styling
@@ -92,10 +92,10 @@ synorg/
 
 ## Key Features
 
-### Edge Rails
-- Using Rails 8.2.0.alpha from GitHub main branch
-- Configured via Bundler git dependency
-- Access to latest Rails features
+### Rails Framework
+- Using Rails 8.1.1 (latest stable version)
+- Full compatibility with all development tools
+- Stable, production-ready foundation
 
 ### Database
 - PostgreSQL for all environments
@@ -178,7 +178,7 @@ synorg/
 - `.ruby-version` - Ruby 3.2.3
 - `.rubocop.yml` - RuboCop GitHub preset
 - `.erb_lint.yml` - ERB linting rules
-- `Gemfile` - Edge Rails from GitHub
+- `Gemfile` - Rails 8.1.1 (stable)
 
 ### JavaScript/TypeScript
 - `.node-version` - Node 20.x
@@ -235,9 +235,8 @@ All acceptance criteria met:
 
 ## Known Limitations
 
-1. **Bullet gem**: Commented out in Gemfile pending Rails 8.2.0.alpha support
-2. **Playwright tests**: Scaffolded but no tests written yet
-3. **Database**: PostgreSQL required (no SQLite support)
+1. **Playwright tests**: Scaffolded but no tests written yet
+2. **Database**: PostgreSQL required (no SQLite support)
 
 ---
 
@@ -250,7 +249,6 @@ Recommended next steps for developers:
 3. Write your first test
 4. Add Playwright end-to-end tests
 5. Configure production deployment
-6. Enable Bullet when Rails edge support is available
 
 ---
 
@@ -258,7 +256,7 @@ Recommended next steps for developers:
 
 ### Official Documentation
 - Rails Guides: https://guides.rubyonrails.org/
-- Rails Edge API: https://edgeapi.rubyonrails.org/
+- Rails API: https://api.rubyonrails.org/
 - Solid Queue: https://github.com/rails/solid_queue
 - Tailwind CSS: https://tailwindcss.com/
 - TypeScript: https://www.typescriptlang.org/
@@ -276,13 +274,13 @@ Recommended next steps for developers:
 ### Regular Tasks
 - Update dependencies monthly: `bundle update && npm update`
 - Run security scans: `bin/brakeman && bin/bundler-audit`
-- Keep Rails edge up to date: `bundle update rails`
+- Keep Rails up to date: `bundle update rails`
 - Review and apply RuboCop updates
 - Update Node.js and TypeScript as needed
 
 ### Version Updates
 - See `docs/ruby-upgrade-guide.md` for Ruby upgrades
-- Follow Rails upgrade guides when moving to stable releases
+- Follow Rails upgrade guides when updating to new major versions
 - Test all changes in CI before merging
 
 ---
