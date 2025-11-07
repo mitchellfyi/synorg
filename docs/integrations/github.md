@@ -159,12 +159,25 @@ The PAT is accessed via the `github_pat_secret_name` configured in the project s
 - Invalid signatures are rejected with a 401 Unauthorized response
 - Webhook signature verification prevents unauthorized access
 
+#### Example: Generating and Verifying a Webhook Signature
+
+To generate a valid signature for a webhook payload (e.g., for testing), use the following Ruby code:
+
+```ruby
+require "openssl"
+
+secret = "your_webhook_secret" # Replace with your actual webhook secret
+payload = '{"action":"opened","issue":{"number":1}}' # Example JSON payload
+
+signature = "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", secret, payload)
+puts signature
+# => sha256=abcdef123456...
 ### Secret Storage
 
 - **Never commit secrets to your repository**
 - Secrets are stored in GitHub repository secrets
-- Synorg only stores the _name_ of the secret, not the value
-- Actual secret values are accessed from Rails credentials or environment variables
+- Synorg projects only store the _reference name_ of the secret (e.g., 'SYNORG_WEBHOOK_SECRET'), not the actual secret value.
+- The secret values themselves are stored securely in Rails encrypted credentials or environment variables.
 
 ### PAT Permissions
 

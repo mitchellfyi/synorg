@@ -7,14 +7,14 @@ FactoryBot.define do
     sequence(:delivery_id) { |n| "delivery-#{n}" }
     payload do
       {
-        action: "opened",
-        issue: {
-          number: 123,
-          title: "Test Issue",
-          body: "Test issue body",
-          state: "open",
-          labels: [],
-          html_url: "https://github.com/test/repo/issues/123"
+        "action" => "opened",
+        "issue" => {
+          "number" => 123,
+          "title" => "Test Issue",
+          "body" => "Test issue body",
+          "state" => "open",
+          "labels" => [],
+          "html_url" => "https://github.com/test/repo/issues/123"
         }
       }
     end

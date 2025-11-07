@@ -110,14 +110,14 @@ class WebhookEventProcessor
       .where("payload->>'issue_number' = ?", issue["number"].to_s)
       .first_or_initialize
 
-    work_item.payload = {
+    work_item.payload = (work_item.payload || {}).merge({
       issue_number: issue["number"],
       title: issue["title"],
       body: issue["body"],
       labels: issue["labels"]&.map { |l| l["name"] } || [],
       state: issue["state"],
       html_url: issue["html_url"]
-    }
+    })
 
     work_item.status = issue["state"] == "open" ? "pending" : "completed"
 
@@ -152,8 +152,13 @@ class WebhookEventProcessor
     return unless work_item.assigned_agent
 
     # Find existing run or create new one, handling potential race conditions
-    run = work_item.runs.where(agent: work_item.assigned_agent).first_or_create do |r|
-      r.started_at = Time.current
+    begin
+      run = work_item.runs.find_or_create_by!(agent: work_item.assigned_agent) do |r|
+        r.started_at = Time.current
+      end
+    rescue ActiveRecord::RecordNotUnique
+      # If a duplicate is attempted due to race, fetch the existing run
+      run = work_item.runs.find_by(agent: work_item.assigned_agent)
     end
 
     run.update!(
@@ -211,7 +216,7 @@ class WebhookEventProcessor
 
     run.update!(
       outcome: outcome,
-      finished_at: workflow_run["updated_at"] ? Time.parse(workflow_run["updated_at"]) : Time.current
+      finished_at: workflow_run["updated_at"] ? Time.iso8601(workflow_run["updated_at"]) : Time.current
     )
   end
 
@@ -239,8 +244,8 @@ class WebhookEventProcessor
   # GitHub issue reference patterns
   # Matches common patterns like "Fixes #123", "Closes #456", etc.
   ISSUE_REFERENCE_PATTERN = /
-    (?:fix|fixes|fixed|close|closes|closed|resolve|resolves|resolved)
-    \s+\#(\d+)
+    (?:fix(?:es|ed)?|close(?:s|d)?|resolve(?:s|d)?)
+    \s+\#(\d++)
   /ix
 
   def extract_issue_number_from_pr(pull_request)

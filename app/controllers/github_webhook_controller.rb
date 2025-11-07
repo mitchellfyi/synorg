@@ -44,22 +44,24 @@ class GithubWebhookController < ApplicationController
     payload = JSON.parse(request_body)
 
     # Persist the webhook event
-    webhook_event = project.webhook_events.create!(
+    project.webhook_events.create!(
       event_type: event_type,
       delivery_id: delivery_id,
       payload: payload
     )
 
     # Process the event asynchronously
-    WebhookEventProcessor.new(project, event_type, payload).process
+    WebhookEventProcessorJob.perform_later(project.id, event_type, payload)
 
     head :accepted
   rescue JSON::ParserError => e
     Rails.logger.error("Failed to parse webhook payload: #{e.message}")
     head :bad_request
   rescue StandardError => e
-    Rails.logger.error("Error processing webhook: #{e.message}")
-    Rails.logger.error(e.backtrace.join("\n"))
+    Rails.logger.error("Error processing webhook: #{e.class} - #{e.message}")
+    if Rails.env.development? || Rails.env.test?
+      Rails.logger.debug(e.backtrace.join("\n"))
+    end
     head :internal_server_error
   end
 
