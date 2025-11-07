@@ -104,10 +104,13 @@ class WebhookEventProcessor
   end
 
   def create_or_update_work_item_from_issue(issue)
+    issue_number = issue["number"]
+    return unless issue_number
+
     # Use PostgreSQL JSON query to find existing work item
     work_item = project.work_items
       .where(work_type: "issue")
-      .where("payload->>'issue_number' = ?", issue["number"].to_s)
+      .where("payload->>'issue_number' = ?", issue_number.to_s)
       .first_or_initialize
 
     work_item.payload = (work_item.payload || {}).merge({
@@ -180,8 +183,14 @@ class WebhookEventProcessor
 
     return unless work_item
 
-    # Find the most recent run for this work item
-    run = work_item.runs.order(created_at: :desc).first
+    # Find the run associated with this PR by matching the logs_url
+    # which was set to the PR URL when the run was created
+    pr_url = pull_request["html_url"]
+    run = work_item.runs.find_by(logs_url: pr_url)
+
+    # If no run found by URL, fall back to the most recent run
+    # This handles cases where the run was created before the PR was opened
+    run ||= work_item.runs.order(created_at: :desc).first
 
     return unless run
 

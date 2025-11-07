@@ -95,7 +95,7 @@ RSpec.describe GithubWebhookController, type: :controller do
     context "with unsupported event type" do
       let(:signature) { generate_signature(payload_json, webhook_secret) }
 
-      it "accepts but does not process the webhook" do
+      it "rejects unsupported event type before persistence" do
         request.headers["X-GitHub-Event"] = "unsupported_event"
         request.headers["X-Hub-Signature-256"] = signature
         request.headers["X-GitHub-Delivery"] = delivery_id

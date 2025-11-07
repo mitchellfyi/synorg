@@ -83,14 +83,18 @@ class GithubWebhookController < ApplicationController
   def find_project_by_signature(request_body, signature)
     return nil unless signature
 
-    Project.where.not(webhook_secret_name: nil).find_each do |project|
+    # Optimize by only loading necessary fields and filtering out null webhook_secret_name
+    Project.where.not(webhook_secret_name: nil)
+      .select(:id, :webhook_secret_name)
+      .find_each do |project|
       # Get the secret from Rails credentials or environment
       secret = fetch_secret(project.webhook_secret_name)
       next unless secret
 
       # Verify the signature
       if WebhookVerifier.verify(request_body, signature, secret)
-        return project
+        # Reload full project object since we only selected specific fields
+        return Project.find(project.id)
       end
     end
 
