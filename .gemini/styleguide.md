@@ -7,6 +7,7 @@ This file customizes Gemini Code Assist behavior for code reviews, pull requests
 Synorg is a modern Rails edge application with PostgreSQL, Solid Queue, Tailwind CSS, esbuild, and Hotwire.
 
 **Stack**:
+
 - Ruby on Rails 8.1.1 (edge)
 - Ruby 3.2.3
 - PostgreSQL 16+
@@ -25,6 +26,7 @@ When reviewing or suggesting code changes, follow this loop:
 Keep the codebase readable, maintainable, accessible, and secure.
 
 References:
+
 - [Trunk-based development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development)
 - [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - [Diátaxis documentation](https://diataxis.fr/)
@@ -44,6 +46,7 @@ References:
 ### Code Style
 
 #### Ruby/Rails
+
 - Follow Rails conventions and RuboCop GitHub preset
 - Use RSpec for testing (no Minitest)
 - Use Solid Queue for background jobs
@@ -51,6 +54,7 @@ References:
 - Keep controllers thin, models focused
 
 #### JavaScript/TypeScript
+
 - Use TypeScript for type safety
 - Follow ESLint flat config rules
 - Format with Prettier
@@ -58,6 +62,7 @@ References:
 - Keep bundle sizes minimal
 
 #### CSS
+
 - Use Tailwind utility classes
 - Follow mobile-first responsive design
 - Avoid custom CSS when Tailwind utilities exist
@@ -74,6 +79,7 @@ References:
 ## Security & Privacy
 
 When reviewing code, ensure:
+
 - **OWASP Top 10** vulnerabilities are avoided
 - Secrets never committed to the repository
 - All user inputs are validated
@@ -82,6 +88,7 @@ When reviewing code, ensure:
 - Dependencies are up to date and not vulnerable
 
 References:
+
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheets](https://cheatsheetseries.owasp.org/index.html)
 
@@ -92,12 +99,14 @@ References:
 - Ensure responsive design works on mobile and desktop
 
 References:
+
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
 - [Nielsen's Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/)
 
 ## CI/CD Expectations
 
 All PRs must pass:
+
 - RuboCop linting
 - ERB Lint
 - ESLint
@@ -113,6 +122,7 @@ PRs should not be merged with failing CI checks.
 ## Pull Request Best Practices
 
 ### Good PRs
+
 - Small and focused on a single concern
 - Include tests for new functionality
 - Update documentation as needed
@@ -122,6 +132,7 @@ PRs should not be merged with failing CI checks.
 - Link to related issues
 
 ### Red Flags
+
 - Large PRs with many unrelated changes
 - Missing tests
 - Failing CI checks
@@ -133,6 +144,7 @@ PRs should not be merged with failing CI checks.
 ## Synorg-Specific Patterns
 
 ### Commands to Suggest
+
 ```bash
 # Setup
 bin/setup
@@ -155,6 +167,7 @@ bin/bundler-audit
 ```
 
 ### Git Workflow
+
 - Branch from `main`
 - Keep `main` releasable
 - Rebase or merge to stay synced with `main`
@@ -162,10 +175,12 @@ bin/bundler-audit
 - Run local CI before pushing
 
 References:
+
 - [git-rebase](https://git-scm.com/docs/git-rebase)
 - [Merge vs rebase](https://www.atlassian.com/git/tutorials/merging-vs-rebasing)
 
 ### Documentation Structure
+
 - `/docs` - Detailed documentation
 - `AGENTS.md` - Agent conventions
 - `.github/copilot-instructions.md` - Copilot instructions
@@ -175,6 +190,7 @@ References:
 ## Research Before Suggesting
 
 Before making suggestions:
+
 1. Read the latest **primary docs** for the relevant tool or framework
 2. Check existing patterns in the codebase
 3. Conform to established conventions
@@ -183,6 +199,7 @@ Before making suggestions:
 ## Upstream Documentation
 
 Reference these when reviewing code:
+
 - [Rails Guides](https://guides.rubyonrails.org/)
 - [Solid Queue](https://github.com/rails/solid_queue)
 - [Tailwind CSS](https://tailwindcss.com/docs)

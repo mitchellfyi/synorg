@@ -9,6 +9,7 @@ This is **Synorg**, a Rails edge application with PostgreSQL, Solid Queue, Tailw
 Work in tiny loops: **clarify → look up official docs → research best approach → change → lint/format → test → self-review → document → run local CI → sync with `main` → commit (Conventional Commits) → sync with `main` again → reflect.** Keep the codebase readable, maintainable, accessible, and secure.
 
 References:
+
 - [Trunk-based development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development)
 - [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - [Diátaxis documentation framework](https://diataxis.fr/)
@@ -21,6 +22,7 @@ References:
 - Update docs as you go (Diátaxis split: tutorials/how-tos/reference/explanation)
 
 References:
+
 - [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
 - [SOLID principles](https://en.wikipedia.org/wiki/SOLID)
 
@@ -37,6 +39,7 @@ References:
 - Aim for **WCAG 2.2 AA** compliance
 
 References:
+
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheets](https://cheatsheetseries.owasp.org/index.html)
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
@@ -47,12 +50,14 @@ References:
 **After commit (before push)**: Repeat sync, resolve conflicts, **re-run local CI**, then push
 
 References:
+
 - [git-rebase](https://git-scm.com/docs/git-rebase)
 - [Merge vs rebase](https://www.atlassian.com/git/tutorials/merging-vs-rebasing)
 
 ## Code Style & Standards
 
 ### Ruby
+
 - Use Rails conventions and idioms
 - Follow RuboCop GitHub preset
 - Write RSpec tests for all new code
@@ -60,6 +65,7 @@ References:
 - Prefer explicit over implicit
 
 ### JavaScript/TypeScript
+
 - Use TypeScript for type safety
 - Follow ESLint flat config rules
 - Format with Prettier
@@ -67,6 +73,7 @@ References:
 - Use Hotwire (Turbo/Stimulus) for interactivity
 
 ### CSS
+
 - Use Tailwind utility classes
 - Follow mobile-first responsive design
 - Avoid custom CSS when Tailwind utilities suffice
@@ -158,6 +165,7 @@ bin/bundler-audit
 - Keep PRs green – do **not** merge red builds
 
 References:
+
 - [GitHub Actions events](https://docs.github.com/actions/learn-github-actions/events-that-trigger-workflows)
 - [GitHub-hosted runners](https://docs.github.com/actions/using-github-hosted-runners/about-github-hosted-runners)
 
@@ -166,6 +174,7 @@ References:
 For more specific guidance on certain paths or components, check for path-scoped instruction files in `.github/copilot-instructions/` (when supported).
 
 References:
+
 - [Repository custom instructions](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)
 - [Your first custom instructions](https://docs.github.com/en/copilot/tutorials/customization-library/custom-instructions/your-first-custom-instructions)
 - [Copilot coding agent](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent)

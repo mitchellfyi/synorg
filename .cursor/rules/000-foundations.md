@@ -5,6 +5,7 @@ This file provides foundational rules and conventions for Cursor AI when working
 ## Repository Overview
 
 Synorg is a modern Ruby on Rails edge application with:
+
 - **Framework**: Ruby on Rails 8.1.1 (edge)
 - **Language**: Ruby 3.2.3
 - **Database**: PostgreSQL 16+
@@ -21,6 +22,7 @@ Work in tiny loops: **clarify → look up official docs → research best approa
 Keep the codebase readable, maintainable, accessible, and secure. **Re-read this loop at the start of every task and roughly every ~50k tokens used.**
 
 References:
+
 - Trunk-based development: [Atlassian](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development), [Martin Fowler](https://martinfowler.com/articles/continuousIntegration.html)
 - [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
 - [Diátaxis documentation framework](https://diataxis.fr/start-here/)
@@ -34,6 +36,7 @@ References:
 - **Update docs as you go**: Follow Diátaxis split (tutorials/how-tos/reference/explanation).
 
 References:
+
 - [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
 - [SOLID principles](https://en.wikipedia.org/wiki/SOLID)
 
@@ -53,6 +56,7 @@ References:
 - Follow least privilege principle
 
 References:
+
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/index.html)
 
@@ -62,6 +66,7 @@ References:
 - Sanity-check UX against **Nielsen's 10 usability heuristics**
 
 References:
+
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
 - [Nielsen's 10 Usability Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/)
 
@@ -73,12 +78,14 @@ References:
 ## Keep Your Branch in Sync with `main`
 
 **Before each commit**: Fetch and integrate the latest `main` into your feature branch:
+
 - Prefer linear history: `git fetch origin && git rebase origin/main`
 - Alternatively merge if your team prefers: `git fetch origin && git merge origin/main`
 
 **After the commit (before push)**: Repeat the sync quickly to catch new upstream changes. Resolve conflicts, **re-run local CI**, then push (use `--force-with-lease` if you rebased).
 
 References:
+
 - [git-rebase](https://git-scm.com/docs/git-rebase)
 - [Atlassian rebase guide](https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase)
 - [Merge vs rebase](https://www.atlassian.com/git/tutorials/merging-vs-rebasing)
@@ -91,12 +98,14 @@ References:
 - **Keep PRs green** – do not merge red builds
 
 References:
+
 - [GitHub Actions events](https://docs.github.com/actions/learn-github-actions/events-that-trigger-workflows)
 - [GitHub-hosted runners](https://docs.github.com/actions/using-github-hosted-runners/about-github-hosted-runners)
 
 ## Synorg-Specific Code Style
 
 ### Ruby/Rails
+
 - Use Rails conventions and idioms
 - Follow RuboCop GitHub preset
 - Write RSpec tests for all new code
@@ -104,6 +113,7 @@ References:
 - Prefer explicit over implicit
 
 ### JavaScript/TypeScript
+
 - Use TypeScript for type safety
 - Follow ESLint flat config rules
 - Format with Prettier
@@ -111,6 +121,7 @@ References:
 - Use Hotwire (Turbo/Stimulus) for interactivity
 
 ### CSS
+
 - Use Tailwind utility classes
 - Follow mobile-first responsive design
 - Avoid custom CSS when Tailwind utilities suffice
@@ -157,6 +168,7 @@ bin/bundler-audit
 ## Architecture & Patterns
 
 Before making changes, understand existing patterns:
+
 - Rails models → `app/models/`
 - Controllers → `app/controllers/`
 - Background jobs → `app/jobs/`
@@ -167,6 +179,7 @@ Before making changes, understand existing patterns:
 ## Upstream Documentation
 
 When working on Synorg, consult these primary sources:
+
 - [Rails Guides](https://guides.rubyonrails.org/)
 - [Solid Queue](https://github.com/rails/solid_queue)
 - [Tailwind CSS](https://tailwindcss.com/docs)
