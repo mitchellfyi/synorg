@@ -128,13 +128,14 @@ GitHub Actions runs on every non-draft PR:
 
 ### Required Secrets
 
-Set `RAILS_MASTER_KEY` in GitHub Actions secrets:
+Set `RAILS_MASTER_KEY` in GitHub Actions secrets for CI to work:
 
-```
-Settings → Secrets and variables → Actions → New repository secret
-```
+1. Go to repository Settings → Secrets and variables → Actions
+2. Click "New repository secret"
+3. Name: `RAILS_MASTER_KEY`
+4. Value: Contents of `config/master.key` (never commit this file)
 
-Get the key from `config/master.key` (never commit this file).
+The master key is used to decrypt Rails credentials. Keep it secure.
 
 ## Project Structure
 
