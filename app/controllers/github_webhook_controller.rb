@@ -50,7 +50,7 @@ class GithubWebhookController < ApplicationController
       payload: payload
     )
 
-    # Process the event asynchronously
+    # Process the event
     WebhookEventProcessorJob.perform_later(project.id, event_type, payload)
 
     head :accepted
