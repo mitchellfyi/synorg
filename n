@@ -1,0 +1,28 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Command Injection",
+      "warning_code": 14,
+      "fingerprint": "0d89dda2b52781ee83bfb3d23b37b7c25643392ff6ab20722087e09ae47ff4ec",
+      "check_name": "Execute",
+      "message": "Possible command injection",
+      "file": "app/services/workspace_service.rb",
+      "line": 45,
+      "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
+      "code": "Open3.capture3(\"git\", \"clone\", \"--branch\", (project.repo_default_branch or \"main\"), \"--depth\", \"1\", \"https://#{pat}@github.com/#{project.repo_full_name}.git\", \"repo\", :chdir => File.join(Dir.tmpdir, \"synorg-workspace-#{SecureRandom.hex(16)}\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "WorkspaceService",
+        "method": "clone_repository"
+      },
+      "user_input": "pat",
+      "confidence": "Medium",
+      "cwe_id": [
+        77
+      ],
+      "note": "False positive: Open3.capture3 with separate arguments does not execute shell commands. Git parameters are properly separated."
+    }
+  ],
+  "brakeman_version": "7.1.1"
+}
