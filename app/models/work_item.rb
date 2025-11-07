@@ -6,7 +6,7 @@ class WorkItem < ApplicationRecord
   belongs_to :locked_by_agent, class_name: "Agent", optional: true
   has_many :runs, dependent: :destroy
 
-  validates :type, presence: true
+  validates :work_type, presence: true
   validates :status, presence: true
 
   scope :pending, -> { where(status: "pending") }

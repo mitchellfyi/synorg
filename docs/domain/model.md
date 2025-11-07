@@ -102,7 +102,7 @@ The `work_items` table stores tasks to be processed by agents.
 |---------------------|-----------|----------|------------|------------------------------------------------|
 | id                  | bigint    | NO       |            | Primary key                                    |
 | project_id          | bigint    | NO       |            | Foreign key to projects                        |
-| type                | string    | NO       |            | Type of work (e.g., 'code_review', 'deploy')   |
+| work_type           | string    | NO       |            | Type of work (e.g., 'code_review', 'deploy')   |
 | payload             | json      | NO       | {}         | Work item data and parameters                  |
 | status              | string    | NO       | 'pending'  | Current status                                 |
 | priority            | integer   | NO       | 0          | Priority (higher = more urgent)                |

@@ -10,7 +10,7 @@ RSpec.describe AssignmentService do
     it "leases a pending work item" do
       work_item = WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "pending",
         priority: 10
       )
@@ -27,7 +27,7 @@ RSpec.describe AssignmentService do
     it "creates a Run record when leasing" do
       work_item = WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "pending"
       )
 
@@ -47,15 +47,15 @@ RSpec.describe AssignmentService do
     end
 
     it "skips locked work items" do
-      locked_item = WorkItem.create!(
+      WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "pending",
         locked_at: Time.current
       )
       available_item = WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "pending"
       )
 
@@ -65,15 +65,15 @@ RSpec.describe AssignmentService do
     end
 
     it "prioritizes higher priority work items" do
-      low_priority = WorkItem.create!(
+      WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "pending",
         priority: 1
       )
       high_priority = WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "pending",
         priority: 10
       )
@@ -88,7 +88,7 @@ RSpec.describe AssignmentService do
     it "releases a locked work item" do
       work_item = WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "in_progress",
         locked_at: Time.current,
         locked_by_agent: agent
@@ -106,7 +106,7 @@ RSpec.describe AssignmentService do
     let(:work_item) do
       WorkItem.create!(
         project: project,
-        type: "test_work",
+        work_type: "test_work",
         status: "in_progress",
         locked_at: Time.current,
         locked_by_agent: agent

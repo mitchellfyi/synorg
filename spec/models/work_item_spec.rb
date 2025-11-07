@@ -17,11 +17,11 @@ RSpec.describe WorkItem, type: :model do
 
   describe "scopes" do
     let(:project) { Project.create!(slug: "test") }
-    let!(:pending_item) { described_class.create!(project: project, type: "test", status: "pending") }
-    let!(:in_progress_item) { described_class.create!(project: project, type: "test", status: "in_progress") }
-    let!(:completed_item) { described_class.create!(project: project, type: "test", status: "completed") }
-    let!(:failed_item) { described_class.create!(project: project, type: "test", status: "failed") }
-    let!(:locked_item) { described_class.create!(project: project, type: "test", status: "pending", locked_at: Time.current) }
+    let!(:pending_item) { described_class.create!(project: project, work_type: "test", status: "pending") }
+    let!(:in_progress_item) { described_class.create!(project: project, work_type: "test", status: "in_progress") }
+    let!(:completed_item) { described_class.create!(project: project, work_type: "test", status: "completed") }
+    let!(:failed_item) { described_class.create!(project: project, work_type: "test", status: "failed") }
+    let!(:locked_item) { described_class.create!(project: project, work_type: "test", status: "pending", locked_at: Time.current) }
 
     describe ".pending" do
       it "returns only pending work items" do
@@ -38,8 +38,8 @@ RSpec.describe WorkItem, type: :model do
     end
 
     describe ".by_priority" do
-      let!(:low_priority) { described_class.create!(project: project, type: "test", status: "pending", priority: 1) }
-      let!(:high_priority) { described_class.create!(project: project, type: "test", status: "pending", priority: 10) }
+      let!(:low_priority) { described_class.create!(project: project, work_type: "test", status: "pending", priority: 1) }
+      let!(:high_priority) { described_class.create!(project: project, work_type: "test", status: "pending", priority: 10) }
 
       it "orders by priority descending, then created_at ascending" do
         results = described_class.by_priority.to_a

@@ -23,7 +23,7 @@ end
 puts "✓ Created project: #{project.name} (#{project.slug})"
 
 # Create sample agents
-code_agent = Agent.find_or_create_by!(key: "code-reviewer") do |a|
+Agent.find_or_create_by!(key: "code-reviewer") do |a|
   a.name = "Code Reviewer"
   a.description = "Reviews code changes for quality and best practices"
   a.capabilities = {
@@ -34,7 +34,7 @@ code_agent = Agent.find_or_create_by!(key: "code-reviewer") do |a|
   a.enabled = true
 end
 
-test_agent = Agent.find_or_create_by!(key: "test-runner") do |a|
+Agent.find_or_create_by!(key: "test-runner") do |a|
   a.name = "Test Runner"
   a.description = "Runs automated tests on pull requests"
   a.capabilities = {
@@ -44,7 +44,7 @@ test_agent = Agent.find_or_create_by!(key: "test-runner") do |a|
   a.enabled = true
 end
 
-deploy_agent = Agent.find_or_create_by!(key: "deployer") do |a|
+Agent.find_or_create_by!(key: "deployer") do |a|
   a.name = "Deployment Agent"
   a.description = "Handles deployment to staging and production"
   a.capabilities = {
@@ -57,40 +57,43 @@ end
 puts "✓ Created agents: #{Agent.count} total"
 
 # Create sample work items
-work_item_1 = WorkItem.find_or_create_by!(
+WorkItem.find_or_initialize_by(
   project: project,
-  type: "code_review",
-  payload: {
+  work_type: "code_review"
+).tap do |wi|
+  wi.payload = {
     "pr_number" => 123,
     "files_changed" => 5
   }
-) do |wi|
   wi.status = "pending"
   wi.priority = 10
+  wi.save!
 end
 
-work_item_2 = WorkItem.find_or_create_by!(
+WorkItem.find_or_initialize_by(
   project: project,
-  type: "run_tests",
-  payload: {
+  work_type: "run_tests"
+).tap do |wi|
+  wi.payload = {
     "branch" => "feature/new-feature",
     "commit_sha" => "abc123"
   }
-) do |wi|
   wi.status = "pending"
   wi.priority = 20
+  wi.save!
 end
 
-work_item_3 = WorkItem.find_or_create_by!(
+WorkItem.find_or_initialize_by(
   project: project,
-  type: "deploy",
-  payload: {
+  work_type: "deploy"
+).tap do |wi|
+  wi.payload = {
     "environment" => "staging",
     "version" => "1.0.0"
   }
-) do |wi|
   wi.status = "pending"
   wi.priority = 5
+  wi.save!
 end
 
 puts "✓ Created work items: #{WorkItem.count} total"

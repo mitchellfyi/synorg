@@ -14,6 +14,8 @@ class WebhookVerifier
     return false if signature.nil? || secret.nil?
 
     # GitHub sends signature as "sha256=<signature>"
+    return false unless signature.start_with?("sha256=")
+
     expected_signature = signature.split("=", 2).last
     computed_signature = OpenSSL::HMAC.hexdigest("SHA256", secret, payload)
 
@@ -30,6 +32,9 @@ class WebhookVerifier
   # rubocop:disable GitHub/InsecureHashAlgorithm
   def self.verify_sha1(payload, signature, secret)
     return false if signature.nil? || secret.nil?
+
+    # GitHub sends signature as "sha1=<signature>"
+    return false unless signature.start_with?("sha1=")
 
     expected_signature = signature.split("=", 2).last
     computed_signature = OpenSSL::HMAC.hexdigest("SHA1", secret, payload)
