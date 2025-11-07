@@ -4,6 +4,11 @@
 # Verifies HMAC signatures and processes incoming webhooks
 class GithubWebhookController < ApplicationController
   # Skip CSRF token verification for webhooks
+  # Webhooks are authenticated using HMAC SHA-256 signature verification
+  # instead of CSRF tokens, as they originate from external sources (GitHub)
+  # and cannot include Rails CSRF tokens in their requests.
+  # Security is ensured through the WebhookVerifier service which validates
+  # the X-Hub-Signature-256 header against the configured webhook secret.
   skip_before_action :verify_authenticity_token
 
   # Supported webhook events
