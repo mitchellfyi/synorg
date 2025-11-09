@@ -27,9 +27,31 @@ References:
 
 ### Quality Bar – Every Change
 
-- **Lint/format before tests**: Keep warnings at zero.
-- **Tests first or concurrent**: Many small unit tests, targeted integration tests, few end-to-end tests. Keep suites fast and deterministic.
-- **Refactor in tiny steps**: Behaviour-preserving incremental changes only.
+**CRITICAL: All of the following MUST pass before committing code. No exceptions, no workarounds.**
+
+1. **Linting (RuboCop, ERB Lint, ESLint, Prettier)**
+   - Run: `bin/lint` or `bin/rubocop -f github` for Ruby files only
+   - All offenses must be fixed or properly disabled with inline comments and justification
+   - Zero warnings policy - keep the codebase clean
+   
+2. **Security Scanning (Brakeman, bundler-audit)**
+   - Run: `bin/brakeman --no-pager` and `bin/bundler-audit`
+   - No new security vulnerabilities may be introduced
+   - Existing vulnerabilities in unchanged code are acceptable but should be documented
+   
+3. **Tests (RSpec)**
+   - Run: `bin/test` or `bundle exec rspec`
+   - All tests must pass
+   - New code requires test coverage
+   - Keep suites fast and deterministic
+
+**Pre-commit and Pre-push hooks** (via Lefthook) enforce these requirements automatically:
+- **Pre-commit**: Auto-fixes linting issues on staged files
+- **Pre-push**: Runs full lint + security + test suite before allowing push
+
+**To install hooks**: Run `lefthook install -f` after cloning the repository.
+
+**CI/CD**: GitHub Actions runs the same checks. If local checks pass, CI should pass.
 
 ### Security, Privacy, Reliability
 

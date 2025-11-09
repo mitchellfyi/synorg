@@ -45,5 +45,7 @@ pre-push:
   commands:
     lint:
       run: bin/lint
+    security:
+      run: bin/brakeman --no-pager
     test:
       run: bin/test
