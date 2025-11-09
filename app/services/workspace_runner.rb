@@ -24,7 +24,7 @@ class WorkspaceRunner
   # @return [Boolean] Success status
   def execute(changes:)
     idempotency_key = generate_idempotency_key
-    
+
     # Check if this exact run has already been executed
     if run_already_executed?(idempotency_key)
       Rails.logger.info("Run already executed with idempotency_key: #{idempotency_key}")
@@ -42,7 +42,7 @@ class WorkspaceRunner
     begin
       # Provision workspace
       workspace_service.provision
-      
+
       # Get PAT from project configuration
       pat = fetch_project_pat
       return mark_failed("No PAT configured for project") unless pat
@@ -54,7 +54,7 @@ class WorkspaceRunner
 
       # Create branch with naming convention
       branch_name = generate_branch_name
-      
+
       # Check if branch already exists and handle idempotency
       if branch_exists_remotely?(branch_name, pat)
         Rails.logger.info("Branch #{branch_name} already exists, updating it")
@@ -106,13 +106,15 @@ class WorkspaceRunner
 
   def generate_idempotency_key
     # Generate key based on work item, agent, and content hash
+    # rubocop:disable GitHub/InsecureHashAlgorithm
     content_digest = Digest::SHA256.hexdigest([
       work_item.id,
       work_item.work_type,
       work_item.payload.to_json,
       agent.key
     ].join(":"))
-    
+    # rubocop:enable GitHub/InsecureHashAlgorithm
+
     "run:#{work_item.id}:#{agent.key}:#{content_digest}"
   end
 
@@ -132,20 +134,25 @@ class WorkspaceRunner
 
   def generate_branch_name
     timestamp = Time.current.strftime("%Y%m%d-%H%M%S")
-    "agent/#{agent.key.parameterize}-#{timestamp}"
+    # parameterize converts underscores to hyphens and lowercases
+    sanitized_key = agent.key.parameterize
+    "agent/#{sanitized_key}-#{timestamp}"
   end
 
   def branch_exists_remotely?(branch_name, pat)
+    # Validate branch_name to prevent command injection
+    return false unless branch_name.match?(%r{\Aagent/[\w-]+\z})
+
     # Use git ls-remote to check if branch exists
-    repo_url = "https://github.com/#{project.repo_full_name}.git"
-    
+    repo_url = "https://github.com/#{sanitize_repo_name(project.repo_full_name)}.git"
+
     # Create temporary askpass script for authentication
     askpass_path = File.join(workspace_service.work_dir, "git-askpass-check.sh")
     File.write(askpass_path, "#!/bin/sh\necho '#{pat}'\n")
     FileUtils.chmod("+x", askpass_path)
-    
+
     env = { "GIT_ASKPASS" => askpass_path }
-    
+
     stdout, _stderr, status = Open3.capture3(
       env,
       "git", "ls-remote", "--heads", repo_url, "refs/heads/#{branch_name}"
@@ -158,8 +165,11 @@ class WorkspaceRunner
   end
 
   def checkout_and_update_branch(branch_name, pat)
+    # Validate branch_name to prevent command injection
+    return false unless branch_name.match?(%r{\Aagent/[\w-]+\z})
+
     repo_path = workspace_service.repo_path
-    
+
     # Fetch the branch
     _stdout, stderr, status = Open3.capture3(
       "git", "fetch", "origin", branch_name,
@@ -169,7 +179,7 @@ class WorkspaceRunner
     return false unless status.success?
 
     # Checkout the branch
-    _stdout, _stderr, status = Open3.capture3(
+    _stdout, stderr, status = Open3.capture3(
       "git", "checkout", branch_name,
       chdir: repo_path
     )
@@ -181,11 +191,14 @@ class WorkspaceRunner
   end
 
   def fetch_and_create_branch(branch_name)
-    repo_path = workspace_service.send(:repo_path)
-    base_branch = project.repo_default_branch || "main"
+    # Validate branch_name to prevent command injection
+    return false unless branch_name.match?(%r{\Aagent/[\w-]+\z})
+
+    repo_path = workspace_service.repo_path
+    base_branch = sanitize_branch_name(project.repo_default_branch || "main")
 
     # Fetch latest from origin
-    _stdout, _, status = Open3.capture3(
+    _stdout, stderr, status = Open3.capture3(
       "git", "fetch", "origin", base_branch,
       chdir: repo_path
     )
@@ -207,8 +220,8 @@ class WorkspaceRunner
   end
 
   def merge_latest_main
-    repo_path = workspace_service.send(:repo_path)
-    base_branch = project.repo_default_branch || "main"
+    repo_path = workspace_service.repo_path
+    base_branch = sanitize_branch_name(project.repo_default_branch || "main")
 
     # Fetch latest main
     _stdout, _stderr, status = Open3.capture3(
@@ -235,16 +248,21 @@ class WorkspaceRunner
   def apply_changes(changes)
     return true unless changes[:files]
 
-    repo_path = workspace_service.send(:repo_path)
+    repo_path = workspace_service.repo_path
 
     changes[:files].each do |file_change|
-      file_path = File.join(repo_path, file_change[:path])
-      
+      # Validate file path to prevent directory traversal
+      normalized_path = File.expand_path(file_change[:path], repo_path)
+      unless normalized_path.start_with?(repo_path)
+        Rails.logger.error("Invalid file path: #{file_change[:path]}")
+        return false
+      end
+
       # Create directory if it doesn't exist
-      FileUtils.mkdir_p(File.dirname(file_path))
-      
+      FileUtils.mkdir_p(File.dirname(normalized_path))
+
       # Write file content
-      File.write(file_path, file_change[:content])
+      File.write(normalized_path, file_change[:content])
     end
 
     true
@@ -254,8 +272,11 @@ class WorkspaceRunner
   end
 
   def push_branch(branch_name, pat)
-    repo_path = workspace_service.send(:repo_path)
-    
+    # Validate branch_name to prevent command injection
+    return false unless branch_name.match?(%r{\Aagent/[\w-]+\z})
+
+    repo_path = workspace_service.repo_path
+
     # Set up authentication using git credential helper
     askpass_path = File.join(workspace_service.work_dir, "git-askpass.sh")
     env = { "GIT_ASKPASS" => askpass_path }
@@ -284,7 +305,7 @@ class WorkspaceRunner
     return nil unless pat
 
     github_service = GithubService.new(project.repo_full_name, pat)
-    
+
     base_branch = project.repo_default_branch || "main"
     pr_title = changes[:pr_title] || "feat: automated work by #{agent.name}"
     pr_body = changes[:pr_body] || build_default_pr_body
@@ -320,7 +341,7 @@ class WorkspaceRunner
 
   def mark_successful(pr_data)
     logs = build_success_logs(pr_data)
-    
+
     run.update!(
       finished_at: Time.current,
       outcome: "success",
@@ -331,13 +352,13 @@ class WorkspaceRunner
 
   def mark_failed(error_message)
     logs = build_failure_logs(error_message)
-    
+
     run.update!(
       finished_at: Time.current,
       outcome: "failure",
       logs: logs
     )
-    
+
     false
   end
 
@@ -354,5 +375,18 @@ class WorkspaceRunner
       Workspace execution failed
       Error: #{error_message}
     LOGS
+  end
+
+  # Sanitize branch name to prevent command injection
+  def sanitize_branch_name(branch_name)
+    # Only allow alphanumeric, hyphens, underscores, and slashes
+    branch_name.gsub(/[^a-zA-Z0-9\-_\/]/, "")
+  end
+
+  # Sanitize repository name to prevent command injection
+  def sanitize_repo_name(repo_name)
+    # Only allow owner/repo format with alphanumeric, hyphens, underscores
+    return nil unless repo_name.match?(%r{\A[\w-]+/[\w-]+\z})
+    repo_name
   end
 end

@@ -32,11 +32,16 @@ class WorkspaceService
   def clone_repository(pat)
     return false unless project.repo_full_name
 
+    # Validate repository name to prevent command injection
+    return false unless project.repo_full_name.match?(%r{\A[\w-]+/[\w-]+\z})
+
+    # Sanitize branch name to prevent command injection
+    branch = sanitize_branch_name(project.repo_default_branch || "main")
+
     # Note: PAT is used in URL for Git authentication. Git commands are run with
     # chdir option to avoid exposing in shell history. Consider using Git credential
     # helpers in production for additional security.
     repo_url = "https://github.com/#{project.repo_full_name}.git"
-    branch = project.repo_default_branch || "main"
 
     # Create a temporary askpass script to provide the PAT securely
     askpass_path = File.join(@work_dir, "git-askpass.sh")
@@ -162,9 +167,18 @@ class WorkspaceService
     @work_dir = nil
   end
 
-  private
-
+  # Get the path to the cloned repository within the workspace
+  #
+  # @return [String] Path to the repository directory
   def repo_path
     File.join(@work_dir, "repo")
+  end
+
+  private
+
+  # Sanitize branch name to prevent command injection
+  def sanitize_branch_name(branch_name)
+    # Only allow alphanumeric, hyphens, underscores, and slashes
+    branch_name.gsub(/[^a-zA-Z0-9\-_\/]/, "")
   end
 end
