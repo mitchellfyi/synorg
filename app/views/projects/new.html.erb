@@ -23,7 +23,7 @@
                 </div>
                 <div class="ml-3">
                   <h3 class="text-sm font-medium text-red-800">
-                    There <%= @project.errors.count == 1 ? 'was' : 'were' %> <%= pluralize(@project.errors.count, "error") %> with your submission:
+                    <%= @project.errors.one? ? "There was" : "There were" %> <%= pluralize(@project.errors.count, "error") %> with your submission:
                   </h3>
                   <div class="mt-2 text-sm text-red-700">
                     <ul class="list-disc pl-5 space-y-1">
@@ -40,8 +40,8 @@
           <div class="space-y-6">
             <div>
               <%= form.label :name, class: "block text-sm font-medium text-gray-700" %>
-              <%= form.text_field :name, 
-                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm #{'border-red-300' if @project.errors[:name].any?}",
+              <%= form.text_field :name,
+                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm #{"border-red-300" if @project.errors[:name].any?}",
                   placeholder: "My Awesome Project" %>
               <% if @project.errors[:name].any? %>
                 <p class="mt-2 text-sm text-red-600"><%= @project.errors[:name].first %></p>
@@ -51,9 +51,9 @@
 
             <div>
               <%= form.label :slug, class: "block text-sm font-medium text-gray-700" %>
-              <%= form.text_field :slug, 
+              <%= form.text_field :slug,
                   required: true,
-                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm #{'border-red-300' if @project.errors[:slug].any?}",
+                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm #{"border-red-300" if @project.errors[:slug].any?}",
                   placeholder: "my-awesome-project" %>
               <% if @project.errors[:slug].any? %>
                 <p class="mt-2 text-sm text-red-600"><%= @project.errors[:slug].first %></p>
@@ -63,7 +63,7 @@
 
             <div>
               <%= form.label :brief, "Project Brief", class: "block text-sm font-medium text-gray-700" %>
-              <%= form.text_area :brief, 
+              <%= form.text_area :brief,
                   rows: 6,
                   class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                   placeholder: "Describe what this project is about, its goals, and any important context..." %>
@@ -72,7 +72,7 @@
 
             <div>
               <%= form.label :repo_full_name, "Repository Name", class: "block text-sm font-medium text-gray-700" %>
-              <%= form.text_field :repo_full_name, 
+              <%= form.text_field :repo_full_name,
                   class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                   placeholder: "owner/repository" %>
               <p class="mt-2 text-sm text-gray-500">The GitHub repository for this project (e.g., "octocat/hello-world")</p>
@@ -80,7 +80,7 @@
 
             <div>
               <%= form.label :github_pat_secret_name, "GitHub PAT Secret Name", class: "block text-sm font-medium text-gray-700" %>
-              <%= form.text_field :github_pat_secret_name, 
+              <%= form.text_field :github_pat_secret_name,
                   class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                   placeholder: "GITHUB_PAT" %>
               <p class="mt-2 text-sm text-gray-500">The name of the secret containing the GitHub Personal Access Token</p>
@@ -89,7 +89,7 @@
 
           <div class="mt-6 flex items-center justify-end gap-x-3">
             <%= link_to "Cancel", projects_path, class: "text-sm font-semibold leading-6 text-gray-900" %>
-            <%= form.submit "Create Project", 
+            <%= form.submit "Create Project",
                 class: "inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
           </div>
         <% end %>

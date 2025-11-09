@@ -79,20 +79,20 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <div class="flex space-x-2">
                       <% if run.logs_url.present? %>
-                        <%= link_to "Logs", run.logs_url, 
+                        <%= link_to "Logs", run.logs_url,
                             target: "_blank",
                             class: "text-indigo-600 hover:text-indigo-900" %>
                       <% elsif run.logs.present? %>
-                        <button type="button" 
+                        <button type="button"
                                 data-controller="modal"
                                 data-action="click->modal#open"
-                                data-modal-content-value="<%= run.logs.gsub('"', '&quot;') %>"
+                                data-modal-content-value="<%= run.logs.gsub("\"", "&quot;") %>"
                                 class="text-indigo-600 hover:text-indigo-900">
                           Logs
                         </button>
                       <% end %>
                       <% if run.artifacts_url.present? %>
-                        <%= link_to "Artifacts", run.artifacts_url, 
+                        <%= link_to "Artifacts", run.artifacts_url,
                             target: "_blank",
                             class: "text-indigo-600 hover:text-indigo-900" %>
                       <% end %>

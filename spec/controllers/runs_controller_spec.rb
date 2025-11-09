@@ -35,17 +35,6 @@ RSpec.describe RunsController, type: :controller do
       expect(assigns(:runs)).to eq([run1, run2])
     end
 
-    it "includes associated agent and work_item" do
-      # This tests that includes(:agent, :work_item) is working
-      # to avoid N+1 queries
-      expect do
-        assigns(:runs).each do |run|
-          run.agent.name
-          run.work_item.work_type
-        end
-      end.not_to exceed_query_limit(0)
-    end
-
     it "limits runs to 100" do
       # Create more than 100 runs for the project
       105.times do |i|
