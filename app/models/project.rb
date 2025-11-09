@@ -6,6 +6,7 @@ class Project < ApplicationRecord
   has_many :work_items, dependent: :destroy
   has_many :integrations, dependent: :destroy
   has_many :policies, dependent: :destroy
+  has_many :webhook_events, dependent: :destroy
 
   validates :slug, presence: true, uniqueness: true
   validates :state, presence: true
