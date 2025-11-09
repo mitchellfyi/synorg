@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+require "fileutils"
 require "open3"
 require "securerandom"
 
@@ -135,9 +137,17 @@ class WorkspaceRunner
 
   def branch_exists_remotely?(branch_name, pat)
     # Use git ls-remote to check if branch exists
-    repo_url = "https://#{pat}@github.com/#{project.repo_full_name}.git"
+    repo_url = "https://github.com/#{project.repo_full_name}.git"
+    
+    # Create temporary askpass script for authentication
+    askpass_path = File.join(workspace_service.work_dir, "git-askpass-check.sh")
+    File.write(askpass_path, "#!/bin/sh\necho '#{pat}'\n")
+    FileUtils.chmod("+x", askpass_path)
+    
+    env = { "GIT_ASKPASS" => askpass_path }
     
     stdout, _stderr, status = Open3.capture3(
+      env,
       "git", "ls-remote", "--heads", repo_url, "refs/heads/#{branch_name}"
     )
 
