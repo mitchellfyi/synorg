@@ -158,7 +158,7 @@ class WorkspaceRunner
   end
 
   def checkout_and_update_branch(branch_name, pat)
-    repo_path = workspace_service.send(:repo_path)
+    repo_path = workspace_service.repo_path
     
     # Fetch the branch
     _stdout, stderr, status = Open3.capture3(
@@ -169,7 +169,7 @@ class WorkspaceRunner
     return false unless status.success?
 
     # Checkout the branch
-    _stdout, stderr, status = Open3.capture3(
+    _stdout, _stderr, status = Open3.capture3(
       "git", "checkout", branch_name,
       chdir: repo_path
     )
@@ -185,7 +185,7 @@ class WorkspaceRunner
     base_branch = project.repo_default_branch || "main"
 
     # Fetch latest from origin
-    _stdout, stderr, status = Open3.capture3(
+    _stdout, _, status = Open3.capture3(
       "git", "fetch", "origin", base_branch,
       chdir: repo_path
     )
@@ -269,7 +269,11 @@ class WorkspaceRunner
     if status.success?
       true
     else
-      sanitized_error = stderr.gsub(/#{Regexp.escape(pat)}/, "[REDACTED]")
+      sanitized_error = stderr
+      # Redact PAT itself
+      sanitized_error = sanitized_error.gsub(/#{Regexp.escape(pat)}/, "[REDACTED]")
+      # Redact PAT in URL form (e.g., https://x-access-token:PAT@github.com)
+      sanitized_error = sanitized_error.gsub(%r{https://x-access-token:#{Regexp.escape(pat)}@github\.com}, "https://x-access-token:[REDACTED]@github.com")
       Rails.logger.error("Failed to push branch: #{sanitized_error}")
       false
     end

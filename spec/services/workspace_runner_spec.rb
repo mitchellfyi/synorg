@@ -98,11 +98,12 @@ RSpec.describe WorkspaceRunner do
     end
 
     it "generates unique branch names for different timestamps" do
-      branch1 = runner.send(:generate_branch_name)
-      sleep 1
-      branch2 = runner.send(:generate_branch_name)
-
-      expect(branch1).not_to eq(branch2)
+      travel_to(Time.zone.local(2024, 6, 1, 12, 0, 0)) do
+        branch1 = runner.send(:generate_branch_name)
+        travel 1.second
+        branch2 = runner.send(:generate_branch_name)
+        expect(branch1).not_to eq(branch2)
+      end
     end
 
     it "parameterizes agent keys with special characters" do
