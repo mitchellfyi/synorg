@@ -12,6 +12,7 @@ class ProjectsController < ApplicationController
                                .order(priority: :desc, created_at: :asc)
     @recent_runs = Run.joins(:work_item)
                       .where(work_items: { project_id: @project.id })
+                      .includes(:agent, :work_item)
                       .order(started_at: :desc)
                       .limit(10)
   end

@@ -40,13 +40,13 @@
                     <div class="ml-4 flex-shrink-0 flex items-center space-x-6 text-sm">
                       <div class="text-center">
                         <div class="text-2xl font-semibold text-gray-900">
-                          <%= project.work_items.pending.count + project.work_items.in_progress.count %>
+                          <%= project.open_count %>
                         </div>
                         <div class="text-xs text-gray-500">Open Tasks</div>
                       </div>
                       <div class="text-center">
                         <div class="text-2xl font-semibold text-gray-900">
-                          <%= project.work_items.completed.count %>
+                          <%= project.completed_count %>
                         </div>
                         <div class="text-xs text-gray-500">Completed</div>
                       </div>

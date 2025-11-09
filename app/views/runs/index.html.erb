@@ -86,7 +86,7 @@
                         <button type="button"
                                 data-controller="modal"
                                 data-action="click->modal#open"
-                                data-modal-content-value="<%= run.logs.gsub("\"", "&quot;") %>"
+                                data-modal-content-value="<%= run.logs.to_json %>"
                                 class="text-indigo-600 hover:text-indigo-900">
                           Logs
                         </button>
