@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "concurrent"
 
 RSpec.describe AssignmentService do
   let(:agent) { Agent.create!(key: "test-agent", name: "Test Agent") }
@@ -26,7 +27,7 @@ RSpec.describe AssignmentService do
 
     it "prevents concurrent agents from claiming the same work item" do
       agent2 = Agent.create!(key: "test-agent-2", name: "Test Agent 2")
-      
+
       # Create a single work item
       work_item = WorkItem.create!(
         project: project,
@@ -34,12 +35,14 @@ RSpec.describe AssignmentService do
         status: "pending"
       )
 
-      # Simulate concurrent access using threads
+      # Simulate concurrent access using threads with synchronization barrier
       claimed_items = []
       threads = []
+      barrier = Concurrent::CyclicBarrier.new(2)
 
       threads << Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
           claimed = described_class.lease_next_work_item(agent)
           claimed_items << claimed if claimed
         end
@@ -47,6 +50,7 @@ RSpec.describe AssignmentService do
 
       threads << Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
           claimed = described_class.lease_next_work_item(agent2)
           claimed_items << claimed if claimed
         end
@@ -61,7 +65,7 @@ RSpec.describe AssignmentService do
 
     it "allows multiple agents to claim different work items concurrently" do
       agent2 = Agent.create!(key: "test-agent-2", name: "Test Agent 2")
-      
+
       # Create multiple work items
       work_item1 = WorkItem.create!(
         project: project,
@@ -76,12 +80,14 @@ RSpec.describe AssignmentService do
         priority: 9
       )
 
-      # Simulate concurrent access
+      # Simulate concurrent access with synchronization barrier
       claimed_items = []
       threads = []
+      barrier = Concurrent::CyclicBarrier.new(2)
 
       threads << Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
           claimed = described_class.lease_next_work_item(agent)
           claimed_items << claimed if claimed
         end
@@ -89,6 +95,7 @@ RSpec.describe AssignmentService do
 
       threads << Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
           claimed = described_class.lease_next_work_item(agent2)
           claimed_items << claimed if claimed
         end

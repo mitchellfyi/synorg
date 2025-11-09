@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "open3"
+require "shellwords"
 
 # Service to manage temporary workspaces for agents
 # Handles Git operations: clone, branch, commit, push, PR creation
@@ -45,7 +46,7 @@ class WorkspaceService
 
     # Create a temporary askpass script to provide the PAT securely
     askpass_path = File.join(@work_dir, "git-askpass.sh")
-    File.write(askpass_path, "#!/bin/sh\necho '#{pat}'\n")
+    File.write(askpass_path, "#!/bin/sh\nprintf '%s' #{Shellwords.escape(pat)}\n")
     FileUtils.chmod("+x", askpass_path)
 
     env = { "GIT_ASKPASS" => askpass_path }

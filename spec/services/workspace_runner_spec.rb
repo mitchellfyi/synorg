@@ -120,12 +120,19 @@ RSpec.describe WorkspaceRunner do
   end
 
   describe "#apply_changes" do
-    it "writes files to the workspace" do
+    around do |example|
       runner.workspace_service.provision
-      
       # Create a fake repo directory
       repo_path = File.join(runner.workspace_service.work_dir, "repo")
       FileUtils.mkdir_p(repo_path)
+
+      example.run
+    ensure
+      runner.workspace_service.cleanup
+    end
+
+    it "writes files to the workspace" do
+      repo_path = File.join(runner.workspace_service.work_dir, "repo")
 
       changes = {
         files: [
@@ -135,12 +142,10 @@ RSpec.describe WorkspaceRunner do
       }
 
       result = runner.send(:apply_changes, changes)
-      
+
       expect(result).to be true
       expect(File.read(File.join(repo_path, "test.txt"))).to eq("Hello, World!")
       expect(File.read(File.join(repo_path, "nested/file.txt"))).to eq("Nested content")
-
-      runner.workspace_service.cleanup
     end
 
     it "returns true when no files are provided" do
