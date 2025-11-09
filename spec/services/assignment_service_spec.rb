@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "concurrent"
 
 RSpec.describe AssignmentService do
   let(:agent) { Agent.create!(key: "test-agent", name: "Test Agent") }
@@ -22,6 +23,90 @@ RSpec.describe AssignmentService do
       expect(result.assigned_agent).to eq(agent)
       expect(result.locked_by_agent).to eq(agent)
       expect(result.locked_at).not_to be_nil
+    end
+
+    it "prevents concurrent agents from claiming the same work item" do
+      agent2 = Agent.create!(key: "test-agent-2", name: "Test Agent 2")
+
+      # Create a single work item
+      work_item = WorkItem.create!(
+        project: project,
+        work_type: "test_work",
+        status: "pending"
+      )
+
+      # Simulate concurrent access using threads with synchronization barrier
+      claimed_items = []
+      threads = []
+      barrier = Concurrent::CyclicBarrier.new(2)
+
+      threads << Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
+          claimed = described_class.lease_next_work_item(agent)
+          claimed_items << claimed if claimed
+        end
+      end
+
+      threads << Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
+          claimed = described_class.lease_next_work_item(agent2)
+          claimed_items << claimed if claimed
+        end
+      end
+
+      threads.each(&:join)
+
+      # Only one agent should have claimed the work item
+      expect(claimed_items.compact.size).to eq(1)
+      expect(claimed_items.compact.first.id).to eq(work_item.id)
+    end
+
+    it "allows multiple agents to claim different work items concurrently" do
+      agent2 = Agent.create!(key: "test-agent-2", name: "Test Agent 2")
+
+      # Create multiple work items
+      work_item1 = WorkItem.create!(
+        project: project,
+        work_type: "test_work",
+        status: "pending",
+        priority: 10
+      )
+      work_item2 = WorkItem.create!(
+        project: project,
+        work_type: "test_work",
+        status: "pending",
+        priority: 9
+      )
+
+      # Simulate concurrent access with synchronization barrier
+      claimed_items = []
+      threads = []
+      barrier = Concurrent::CyclicBarrier.new(2)
+
+      threads << Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
+          claimed = described_class.lease_next_work_item(agent)
+          claimed_items << claimed if claimed
+        end
+      end
+
+      threads << Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          barrier.wait # Ensure both threads start at the same time
+          claimed = described_class.lease_next_work_item(agent2)
+          claimed_items << claimed if claimed
+        end
+      end
+
+      threads.each(&:join)
+
+      # Both agents should have claimed work items
+      expect(claimed_items.compact.size).to eq(2)
+      claimed_ids = claimed_items.compact.map(&:id).sort
+      expect(claimed_ids).to match_array([work_item1.id, work_item2.id])
     end
 
     it "creates a Run record when leasing" do
