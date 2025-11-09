@@ -4,7 +4,12 @@ class ProjectsController < ApplicationController
   before_action :set_project, only: [:show]
 
   def index
-    @projects = Project.includes(:work_items).order(created_at: :desc)
+    @projects = Project.left_joins(:work_items)
+                       .select('projects.*,
+                                COUNT(CASE WHEN work_items.status IN (\'pending\', \'in_progress\') THEN 1 END) as open_count,
+                                COUNT(CASE WHEN work_items.status = \'completed\' THEN 1 END) as completed_count')
+                       .group("projects.id")
+                       .order(created_at: :desc)
   end
 
   def show
@@ -15,6 +20,9 @@ class ProjectsController < ApplicationController
                       .includes(:agent, :work_item)
                       .order(started_at: :desc)
                       .limit(10)
+    @total_runs_count = Run.joins(:work_item)
+                           .where(work_items: { project_id: @project.id })
+                           .count
   end
 
   def new

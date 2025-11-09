@@ -55,7 +55,7 @@ RSpec.describe RunsController, type: :controller do
     end
   end
 
-  describe "when project not found" do
+  context "when project not found" do
     it "raises ActiveRecord::RecordNotFound" do
       expect do
         get :index, params: { project_id: 99999 }

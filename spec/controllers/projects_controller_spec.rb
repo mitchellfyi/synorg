@@ -22,6 +22,19 @@ RSpec.describe ProjectsController, type: :controller do
       expect(assigns(:projects)).to eq([newer_project, older_project])
     end
 
+    it "includes aggregated work item counts" do
+      project = create(:project)
+      create(:work_item, project: project, status: "pending")
+      create(:work_item, project: project, status: "in_progress")
+      create(:work_item, project: project, status: "completed")
+
+      get :index
+
+      project_result = assigns(:projects).find { |p| p.id == project.id }
+      expect(project_result.open_count).to eq(2)
+      expect(project_result.completed_count).to eq(1)
+    end
+
     it "renders the index template" do
       get :index
       expect(response).to render_template(:index)
@@ -70,6 +83,10 @@ RSpec.describe ProjectsController, type: :controller do
       get :show, params: { id: project.id }
 
       expect(assigns(:recent_runs).count).to eq(10)
+    end
+
+    it "assigns total runs count" do
+      expect(assigns(:total_runs_count)).to eq(2)
     end
 
     it "renders the show template" do
