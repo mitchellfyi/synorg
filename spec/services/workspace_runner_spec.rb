@@ -150,7 +150,7 @@ RSpec.describe WorkspaceRunner do
 
     it "returns true when no files are provided" do
       changes = { message: "Test commit" }
-      
+
       result = runner.send(:apply_changes, changes)
       expect(result).to be true
     end
@@ -168,7 +168,7 @@ RSpec.describe WorkspaceRunner do
 
     it "includes work item description if present" do
       work_item.update!(payload: { "description" => "Fix critical bug" })
-      
+
       pr_body = runner.send(:build_default_pr_body)
       expect(pr_body).to include("Fix critical bug")
     end
@@ -180,9 +180,9 @@ RSpec.describe WorkspaceRunner do
 
     it "creates a Run record" do
       allow(runner).to receive(:fetch_project_pat).and_return(nil)
-      
+
       changes = { message: "test commit" }
-      
+
       expect {
         runner.execute(changes: changes)
       }.to change { Run.count }.by(1)
@@ -200,7 +200,7 @@ RSpec.describe WorkspaceRunner do
       )
 
       changes = { message: "test commit" }
-      
+
       # Should return true without creating a new run
       expect {
         result = runner.execute(changes: changes)
