@@ -74,7 +74,7 @@ FileUtils.chdir APP_ROOT do
     
     puts "\n  → Ruby linting..."
     system!("bin/rubocop -f github")
-    system!("bundle exec erblint --lint-all")
+    system!("bundle exec erb_lint --lint-all --autocorrect")
     
     puts "\n  → Security scans..."
     system!("bin/brakeman --no-pager")

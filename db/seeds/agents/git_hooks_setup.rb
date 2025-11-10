@@ -65,9 +65,9 @@ AgentSeeder.seed_agent(
         eslint:
           glob: "*.{js,ts,jsx,tsx}"
           run: npm run lint:js -- {staged_files}
-        erblint:
+        erb_lint:
           glob: "*.erb"
-          run: bundle exec erblint --lint-all {staged_files}
+          run: bundle exec erb_lint --lint-all {staged_files}
         prettier:
           glob: "*.{js,ts,jsx,tsx,json,md}"
           run: npx prettier --check {staged_files}

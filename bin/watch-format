@@ -27,7 +27,7 @@ echo ""
 
 # Watch ERB files - lint and auto-format with erb_lint
 "$CHOKIDAR_BIN" 'app/**/*.erb' \
-  -c 'bundle exec erblint --autocorrect {path} && bundle exec erblint {path}' \
+  -c 'bundle exec erb_lint --autocorrect {path} && bundle exec erb_lint {path}' \
   --initial \
   --silent &
 

@@ -310,7 +310,7 @@ AgentSeeder.seed_agent(
 
     # Individual linters
     bin/rubocop
-    bundle exec erblint --lint-all
+    bundle exec erb_lint --lint-all
     npm run lint:js
     ```
 

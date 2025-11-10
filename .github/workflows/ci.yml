@@ -51,7 +51,7 @@ jobs:
         run: bin/rubocop -f github
 
       - name: Lint ERB templates
-        run: bundle exec erblint --lint-all
+        run: bundle exec erb_lint --lint-all
 
   # JavaScript/TypeScript linting
   lint_js:
