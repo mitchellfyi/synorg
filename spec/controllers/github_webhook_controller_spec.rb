@@ -36,7 +36,7 @@ RSpec.describe GithubWebhookController, type: :controller do
     # NOTE: These tests are currently pending due to controller test limitations with raw POST bodies in Rails 8.
     # Controller tests don't properly support raw request bodies needed for webhook testing.
     # TODO: Convert these to request specs which handle raw POST bodies correctly.
-    
+
     context "with valid signature" do
       let(:signature) { generate_signature(payload_json, webhook_secret) }
 
