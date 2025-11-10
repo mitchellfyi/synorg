@@ -1,6 +1,11 @@
 {
   "name": "app",
   "private": true,
+  "packageManager": "yarn@1.22.0",
+  "engines": {
+    "yarn": ">=1.22.0",
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",

@@ -17,7 +17,13 @@ FileUtils.chdir APP_ROOT do
   system("bundle check") || system!("bundle install")
 
   # Install JavaScript dependencies
-  system("npm install")
+  # Use yarn if yarn.lock exists, otherwise npm
+  # Ensure optional dependencies are installed (required for @parcel/watcher)
+  if File.exist?("yarn.lock")
+    system!("yarn install")
+  else
+    system!("npm install")
+  end
 
   # puts "\n== Copying sample files =="
   # unless File.exist?("config/database.yml")
