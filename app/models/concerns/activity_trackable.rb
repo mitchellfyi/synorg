@@ -40,6 +40,9 @@ module ActivityTrackable
 
   # Override in including classes to customize activity project
   def activity_project
+    # For Project model, return self
+    return self if is_a?(Project)
+
     if respond_to?(:project)
       project
     elsif respond_to?(:work_item)
