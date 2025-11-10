@@ -2,10 +2,11 @@
 
 class WorkItem < ApplicationRecord
   include PublicActivity::Model
-  tracked owner: ->(controller, model) { model.assigned_agent },
-          recipient: ->(controller, model) { model.project },
-          project: ->(controller, model) { model.project },
-          key: "work_item.update"
+  # Disable automatic tracking - we handle activities manually for better control
+  # tracked owner: ->(controller, model) { model.assigned_agent },
+  #         recipient: ->(controller, model) { model.project },
+  #         project: ->(controller, model) { model.project },
+  #         key: "work_item.update"
 
   belongs_to :project
   belongs_to :assigned_agent, class_name: "Agent", optional: true

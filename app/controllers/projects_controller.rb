@@ -20,11 +20,6 @@ class ProjectsController < ApplicationController
                                  .order(created_at: :desc)
                                  .limit(10)
                                  .includes(:assigned_agent, :runs)
-    @recent_runs = Run.joins(:work_item)
-                      .where(work_items: { project_id: @project.id })
-                      .includes(:agent, :work_item)
-                      .order(started_at: :desc)
-                      .limit(10)
     @total_runs_count = Run.joins(:work_item)
                            .where(work_items: { project_id: @project.id })
                            .count

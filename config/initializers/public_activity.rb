@@ -1,18 +1,10 @@
 # frozen_string_literal: true
 
 # PublicActivity configuration
-PublicActivity.configure do |config|
-  # Set this to true to enable ActiveRecord adapter
-  config.orm = :active_record
-
-  # Set this to true to enable table name prefix
-  config.table_name_prefix = nil
-
-  # Set this to true to enable table name suffix
-  config.table_name_suffix = nil
-end
+# PublicActivity 3.0.1 works out of the box with ActiveRecord
+# No explicit configuration needed - it automatically uses ActiveRecord as the ORM
 
 # Customize PublicActivity to use JSONB for parameters
 # PublicActivity by default uses YAML, but we're using JSONB
-# We'll handle serialization in the Activity model
+# We handle serialization in the Activity model by overriding the parameters method
 

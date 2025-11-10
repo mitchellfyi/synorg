@@ -2,9 +2,10 @@
 
 class Run < ApplicationRecord
   include PublicActivity::Model
-  tracked owner: ->(controller, model) { model.agent },
-          recipient: ->(controller, model) { model.work_item },
-          project: ->(controller, model) { model.work_item.project }
+  # Disable automatic tracking - we handle activities manually for better control
+  # tracked owner: ->(controller, model) { model.agent },
+  #         recipient: ->(controller, model) { model.work_item },
+  #         project: ->(controller, model) { model.work_item.project }
 
   belongs_to :agent
   belongs_to :work_item

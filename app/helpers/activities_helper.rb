@@ -45,5 +45,41 @@ module ActivitiesHelper
       activity.key.humanize
     end
   end
+
+  def icon_bg_class(activity)
+    case activity.key
+    when /\.completed$/, /\.success/
+      "bg-green-100"
+    when /\.failed$/, /\.error/
+      "bg-red-100"
+    when /\.started$/, /\.triggered$/
+      "bg-blue-100"
+    when /^project\./
+      "bg-purple-100"
+    when /^orchestrator\./
+      "bg-yellow-100"
+    when /^llm\./
+      "bg-indigo-100"
+    when /^work_item\./
+      "bg-gray-100"
+    when /^run\./
+      "bg-cyan-100"
+    else
+      "bg-gray-100"
+    end
+  end
+
+  def activity_color_badge(activity)
+    case activity.key
+    when /\.completed$/, /\.success/
+      "bg-green-100 text-green-800"
+    when /\.failed$/, /\.error/
+      "bg-red-100 text-red-800"
+    when /\.started$/, /\.triggered$/
+      "bg-blue-100 text-blue-800"
+    else
+      "bg-gray-100 text-gray-800"
+    end
+  end
 end
 

@@ -15,7 +15,7 @@ class CreateActivities < ActiveRecord::Migration[8.1]
     add_index :activities, [:trackable_id, :trackable_type]
     add_index :activities, [:owner_id, :owner_type]
     add_index :activities, [:recipient_id, :recipient_type]
-    add_index :activities, :project_id
+    # Note: project_id index is automatically created by belongs_to with foreign_key: true
     add_index :activities, :key
     add_index :activities, :created_at
   end
