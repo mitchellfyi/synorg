@@ -25,27 +25,30 @@ RSpec.describe WorkspaceService do
   end
 
   describe "#clone_repository" do
-    it "is stubbed for now (requires Git and network)" do
-      # This is a stub - full implementation will be tested with integration tests
-      pending "Requires Git setup and network access"
+    it "requires Git and network access" do
+      skip "Integration test - requires Git setup and network access"
+      # Would test: service.clone_repository(pat)
     end
   end
 
   describe "#create_branch" do
-    it "is stubbed for now (requires Git repository)" do
-      pending "Requires cloned repository"
+    it "requires a cloned repository" do
+      skip "Integration test - requires cloned repository"
+      # Would test: service.create_branch("test-branch")
     end
   end
 
   describe "#commit_changes" do
-    it "is stubbed for now (requires Git repository)" do
-      pending "Requires cloned repository"
+    it "requires a cloned repository" do
+      skip "Integration test - requires cloned repository"
+      # Would test: service.commit_changes("test commit")
     end
   end
 
   describe "#push_branch" do
-    it "is stubbed for now (requires Git repository)" do
-      pending "Requires cloned repository"
+    it "requires a cloned repository" do
+      skip "Integration test - requires cloned repository"
+      # Would test: service.push_branch("test-branch")
     end
   end
 

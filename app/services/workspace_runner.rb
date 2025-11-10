@@ -135,8 +135,8 @@ class WorkspaceRunner
 
   def generate_branch_name
     timestamp = Time.current.strftime("%Y%m%d-%H%M%S")
-    # parameterize converts underscores to hyphens and lowercases
-    sanitized_key = agent.key.parameterize
+    # parameterize converts underscores and special chars to hyphens and lowercases
+    sanitized_key = agent.key.parameterize(separator: "-")
     "agent/#{sanitized_key}-#{timestamp}"
   end
 

@@ -42,7 +42,8 @@ RSpec.describe GithubWebhookController, type: :controller do
         request.headers["X-GitHub-Delivery"] = delivery_id
 
         expect do
-          post :create, body: payload_json
+          request.body = payload_json
+          post :create
         end.to change(WebhookEvent, :count).by(1)
 
         expect(response).to have_http_status(:accepted)
@@ -61,7 +62,8 @@ RSpec.describe GithubWebhookController, type: :controller do
 
         expect_any_instance_of(WebhookEventProcessor).to receive(:process)
 
-        post :create, body: payload_json
+        request.body = payload_json
+        post :create
       end
     end
 
@@ -72,7 +74,8 @@ RSpec.describe GithubWebhookController, type: :controller do
         request.headers["X-GitHub-Delivery"] = delivery_id
 
         expect do
-          post :create, body: payload_json
+          request.body = payload_json
+          post :create
         end.not_to change(WebhookEvent, :count)
 
         expect(response).to have_http_status(:unauthorized)
@@ -85,7 +88,8 @@ RSpec.describe GithubWebhookController, type: :controller do
         request.headers["X-GitHub-Delivery"] = delivery_id
 
         expect do
-          post :create, body: payload_json
+          request.body = payload_json
+          post :create
         end.not_to change(WebhookEvent, :count)
 
         expect(response).to have_http_status(:unauthorized)
@@ -101,7 +105,8 @@ RSpec.describe GithubWebhookController, type: :controller do
         request.headers["X-GitHub-Delivery"] = delivery_id
 
         expect do
-          post :create, body: payload_json
+          request.body = payload_json
+          post :create
         end.not_to change(WebhookEvent, :count)
 
         expect(response).to have_http_status(:accepted)
@@ -116,7 +121,8 @@ RSpec.describe GithubWebhookController, type: :controller do
         request.headers["X-Hub-Signature-256"] = signature
         request.headers["X-GitHub-Delivery"] = delivery_id
 
-        post :create, body: "invalid json"
+        request.body = "invalid json"
+        post :create
 
         expect(response).to have_http_status(:bad_request)
       end
@@ -132,7 +138,8 @@ RSpec.describe GithubWebhookController, type: :controller do
 
         allow_any_instance_of(WebhookEventProcessor).to receive(:process).and_raise(StandardError, "Processing failed")
 
-        post :create, body: payload_json
+        request.body = payload_json
+        post :create
 
         expect(response).to have_http_status(:internal_server_error)
       end

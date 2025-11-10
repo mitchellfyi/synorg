@@ -2,6 +2,8 @@
 
 This document defines the roles, specializations, and conventions for AI agents working on the Synorg codebase. It serves as the single source of truth for agent responsibilities, the Operating Loop, conventions, and safety rails.
 
+For synorg's overall mission, architecture, and how agents fit into the orchestration flow, see [MISSION.md](MISSION.md).
+
 ## Coding Agent Operating Loop
 
 Work in tiny loops: **clarify → look up official docs → research best approach → change → lint/format → test → self-review → document → run local CI → sync with `main` → commit (Conventional Commits) → sync with `main` again → reflect.** Keep the codebase readable, maintainable, accessible, and secure. **Re-read this loop at the start of every task and roughly every ~50k tokens used.**
