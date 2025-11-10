@@ -58,6 +58,6 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :slug, :brief, :repo_full_name, :github_pat_secret_name, :github_pat, :webhook_secret)
+    params.require(:project).permit(:name, :slug, :brief, :repo_full_name, :github_pat, :webhook_secret)
   end
 end

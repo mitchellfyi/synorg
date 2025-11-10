@@ -5,6 +5,7 @@ class CreateAgents < ActiveRecord::Migration[8.1]
       t.string :key, null: false
       t.string :name, null: false
       t.text :description
+      t.text :prompt
       t.json :capabilities, default: {}
       t.integer :max_concurrency, default: 1
       t.boolean :enabled, default: true, null: false

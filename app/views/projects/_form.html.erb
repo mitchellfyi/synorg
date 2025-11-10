@@ -75,14 +75,6 @@
   </div>
 
   <div>
-    <%= form.label :github_pat_secret_name, "GitHub PAT Secret Name (Legacy)", class: "block text-sm font-medium text-gray-700" %>
-    <%= form.text_field :github_pat_secret_name,
-        class: "mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-        placeholder: "GITHUB_PAT" %>
-    <p class="mt-2 text-sm text-gray-500">For demo/legacy projects: The name of the secret in Rails credentials containing the GitHub PAT</p>
-  </div>
-
-  <div>
     <%= form.label :webhook_secret, "Webhook Secret", class: "block text-sm font-medium text-gray-700" %>
     <%= form.password_field :webhook_secret,
         class: "mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
