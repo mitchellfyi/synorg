@@ -1,9 +1,9 @@
 {
   "name": "app",
   "private": true,
-  "packageManager": "yarn@1.22.0",
+  "packageManager": "yarn@1.22.22",
   "engines": {
-    "yarn": ">=1.22.0",
+    "yarn": ">=1.22.22",
     "node": ">=18.0.0"
   },
   "devDependencies": {

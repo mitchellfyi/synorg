@@ -79,7 +79,7 @@ Synorg uses a fine-grained Personal Access Token to interact with GitHub's API.
      - **Issues**: Read and write
      - **Pull requests**: Read and write
      - **Commit statuses**: Read and write
-     - **Contents**: Read-only (for reading repository files)
+     - **Contents**: Read and write (for creating files and branches)
      - **Metadata**: Read-only (automatically selected)
 4. Click **Generate token**
 5. **Important**: Copy the token immediately - you won't be able to see it again!
@@ -148,8 +148,10 @@ Synorg uses the configured PAT to:
 - Create and update issue comments
 - Fetch pull request information
 - Access repository metadata
+- Create files and branches via GitHub API
+- Create pull requests with code changes
 
-The PAT is accessed via the `github_pat_secret_name` configured in the project settings.
+All code changes are made directly via GitHub API - GitHub Copilot handles the actual implementation and code review.
 
 ## Security Considerations
 

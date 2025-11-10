@@ -51,7 +51,7 @@ class GithubWebhookController < ApplicationController
     )
 
     # Process the event
-    WebhookEventProcessor.new(project, event_type, payload).process
+    WebhookEventProcessor.new(project, event_type, payload).call
 
     head :accepted
   rescue JSON::ParserError => e

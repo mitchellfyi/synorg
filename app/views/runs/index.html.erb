@@ -1,5 +1,7 @@
 <% content_for :title, "Runs - #{@project.name || @project.slug}" %>
 
+<%= turbo_stream_from "project_#{@project.id}_runs" %>
+
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-8">
@@ -36,70 +38,8 @@
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <% @runs.each do |run| %>
-                <tr class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div>
-                        <div class="text-sm font-medium text-gray-900">
-                          <%= run.agent.name %>
-                        </div>
-                        <div class="text-xs text-gray-500">
-                          <%= run.agent.agent_type %>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm text-gray-900">
-                      <%= run.work_item.payload["title"] || "Work Item ##{run.work_item.id}" %>
-                    </div>
-                    <div class="text-xs text-gray-500">
-                      <%= run.work_item.work_type %>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= run_status_badge_class(run.outcome) %>">
-                      <%= run_status_text(run.outcome, run.started_at, run.finished_at) %>
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <% if run.started_at %>
-                      <time datetime="<%= run.started_at.iso8601 %>" title="<%= run.started_at.strftime("%B %d, %Y at %l:%M %p") %>">
-                        <%= time_ago_in_words(run.started_at) %> ago
-                      </time>
-                    <% else %>
-                      <span class="text-gray-400">Not started</span>
-                    <% end %>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <%= run_duration(run.started_at, run.finished_at) %>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <div class="flex space-x-2">
-                      <% if run.logs_url.present? %>
-                        <%= link_to "Logs", run.logs_url,
-                            target: "_blank",
-                            class: "text-indigo-600 hover:text-indigo-900" %>
-                      <% elsif run.logs.present? %>
-                        <button type="button"
-                                data-controller="modal"
-                                data-action="click->modal#open"
-                                data-modal-content-value="<%= run.logs.to_json %>"
-                                class="text-indigo-600 hover:text-indigo-900">
-                          Logs
-                        </button>
-                      <% end %>
-                      <% if run.artifacts_url.present? %>
-                        <%= link_to "Artifacts", run.artifacts_url,
-                            target: "_blank",
-                            class: "text-indigo-600 hover:text-indigo-900" %>
-                      <% end %>
-                    </div>
-                  </td>
-                </tr>
-              <% end %>
+            <tbody id="runs_<%= @project.id %>" class="bg-white divide-y divide-gray-200">
+              <%= render partial: "runs/run_row", collection: @runs %>
             </tbody>
           </table>
         </div>

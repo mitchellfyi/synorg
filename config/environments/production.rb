@@ -35,8 +35,28 @@ Rails.application.configure do
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
+  # Use structured JSON logging in production for better log aggregation
   config.log_tags = [:request_id]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
+  config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
+
+  # Enable structured JSON logging via environment variable
+  # Set STRUCTURED_LOGS=true to enable JSON format
+  # This works with log aggregation services like CloudWatch, Datadog, etc.
+  if ENV["STRUCTURED_LOGS"] == "true"
+    config.log_formatter = proc do |severity, datetime, progname, msg|
+      # If message is already JSON, output as-is; otherwise wrap it
+      if msg.is_a?(String) && msg.start_with?("{")
+        "#{msg}\n"
+      else
+        {
+          timestamp: datetime.iso8601,
+          level: severity,
+          message: msg,
+          service: progname || "rails"
+        }.to_json + "\n"
+      end
+    end
+  end
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")

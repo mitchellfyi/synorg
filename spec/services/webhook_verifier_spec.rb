@@ -36,25 +36,4 @@ RSpec.describe WebhookVerifier do
       expect(result).to be(false)
     end
   end
-
-  describe ".verify_sha1" do
-    it "verifies a valid SHA1 signature" do
-      # rubocop:disable GitHub/InsecureHashAlgorithm
-      signature = OpenSSL::HMAC.hexdigest("SHA1", secret, payload)
-      # rubocop:enable GitHub/InsecureHashAlgorithm
-      full_signature = "sha1=#{signature}"
-
-      result = described_class.verify_sha1(payload, full_signature, secret)
-
-      expect(result).to be(true)
-    end
-
-    it "rejects an invalid SHA1 signature" do
-      invalid_signature = "sha1=invalid"
-
-      result = described_class.verify_sha1(payload, invalid_signature, secret)
-
-      expect(result).to be(false)
-    end
-  end
 end

@@ -1,0 +1,76 @@
+<li id="<%= dom_id(work_item) %>" class="px-4 py-3 hover:bg-gray-50 transition-colors">
+  <div class="flex items-start justify-between">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= work_item.status == "in_progress" ? "bg-blue-100 text-blue-800" : work_item.status == "completed" ? "bg-green-100 text-green-800" : work_item.status == "failed" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800" %>">
+          <%= work_item.status.titleize %>
+        </span>
+        <span class="text-xs text-gray-500 font-mono">
+          <%= work_item.work_type %>
+        </span>
+      </div>
+      <p class="mt-1 text-sm font-medium text-gray-900">
+        <%= work_item.payload["title"] || work_item.work_type.humanize || "Work Item ##{work_item.id}" %>
+      </p>
+      <div class="mt-1 flex items-center gap-3 text-xs text-gray-500">
+        <span>Priority: <%= work_item.priority %></span>
+        <% if work_item.assigned_agent %>
+          <span>• Agent: <%= work_item.assigned_agent.name %></span>
+        <% end %>
+        <% runs_count = work_item.runs.count %>
+        <% if runs_count > 0 %>
+          <span>• <%= pluralize(runs_count, "run") %></span>
+        <% end %>
+        <span>• Created <%= time_ago_in_words(work_item.created_at) %> ago</span>
+      </div>
+      <% if work_item.payload.present? && work_item.payload.keys.any? { |k| k != "title" } %>
+        <details class="mt-2">
+          <summary class="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800">Show details</summary>
+          <div class="mt-2 p-2 bg-gray-50 rounded text-xs font-mono text-gray-700 max-h-32 overflow-y-auto">
+            <pre><%= JSON.pretty_generate(work_item.payload) %></pre>
+          </div>
+        </details>
+      <% end %>
+      <% if work_item.runs.any? %>
+        <details class="mt-2">
+          <summary class="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800">Show runs (<%= work_item.runs.count %>)</summary>
+          <div class="mt-2 space-y-1">
+            <% work_item.runs.order(started_at: :desc).limit(5).each do |run| %>
+              <div class="text-xs p-2 bg-gray-50 rounded">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium"><%= run.agent.name %></span>
+                  <span class="text-gray-500">
+                    <%= run_status_text(run.outcome, run.started_at, run.finished_at) %>
+                  </span>
+                </div>
+                <% if run.started_at %>
+                  <div class="text-gray-500 mt-1">
+                    <%= time_ago_in_words(run.started_at) %> ago
+                    <% if run.finished_at %>
+                      • Duration: <%= run_duration(run.started_at, run.finished_at) %>
+                    <% end %>
+                  </div>
+                <% end %>
+                <% if run.logs.present? %>
+                  <button type="button"
+                          data-controller="modal"
+                          data-action="click->modal#open"
+                          data-modal-content-value="<%= j(run.logs) %>"
+                          class="mt-1 text-xs text-indigo-600 hover:text-indigo-800">
+                    View logs
+                  </button>
+                <% end %>
+              </div>
+            <% end %>
+            <% if work_item.runs.count > 5 %>
+              <div class="text-xs text-gray-500 text-center pt-1">
+                <%= link_to "View all runs", project_runs_path(work_item.project), class: "text-indigo-600 hover:text-indigo-800" %>
+              </div>
+            <% end %>
+          </div>
+        </details>
+      <% end %>
+    </div>
+  </div>
+</li>
+

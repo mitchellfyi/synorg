@@ -49,8 +49,9 @@ The `projects` table stores information about software projects managed by synor
 | brief                    | text      | YES      | NULL    | Project description or summary                 |
 | repo_full_name           | string    | YES      | NULL    | GitHub repository (e.g., 'owner/repo')         |
 | repo_default_branch      | string    | YES      | NULL    | Default branch name (e.g., 'main')             |
+| github_pat               | text      | YES      | NULL    | GitHub Personal Access Token (encrypted)       |
 | github_pat_secret_name   | string    | YES      | NULL    | Name of secret storing GitHub PAT              |
-| webhook_secret_name      | string    | YES      | NULL    | Name of secret storing webhook secret          |
+| webhook_secret           | text      | YES      | NULL    | Webhook secret for signature verification      |
 | gates_config             | json      | NO       | {}      | Configuration for quality gates                |
 | e2e_required             | boolean   | NO       | true    | Whether E2E tests are required                 |
 | created_at               | datetime  | NO       |         | Record creation timestamp                      |
@@ -59,11 +60,14 @@ The `projects` table stores information about software projects managed by synor
 **Indexes:**
 - `index_projects_on_slug` (unique)
 - `index_projects_on_state`
+- `index_projects_on_webhook_secret` (partial, where webhook_secret IS NOT NULL)
+- `index_projects_on_created_at`
 
 **Relationships:**
 - Has many `work_items`
 - Has many `integrations`
 - Has many `policies`
+- Has many `webhook_events`
 
 ---
 
@@ -77,6 +81,7 @@ The `agents` table stores information about autonomous agents that process work 
 | key             | string    | NO       |         | Unique agent identifier                        |
 | name            | string    | NO       |         | Human-readable agent name                      |
 | description     | text      | YES      | NULL    | Agent description                              |
+| prompt          | text      | YES      | NULL    | LLM prompt for agent execution                 |
 | capabilities    | json      | NO       | {}      | Agent capabilities and configuration           |
 | max_concurrency | integer   | NO       | 1       | Maximum concurrent work items                  |
 | enabled         | boolean   | NO       | true    | Whether the agent is active                    |
@@ -119,6 +124,10 @@ The `work_items` table stores tasks to be processed by agents.
 - `index_work_items_on_status_and_priority_and_locked_at` (composite)
 - `index_work_items_on_assigned_agent_id`
 - `index_work_items_on_locked_by_agent_id`
+- `index_work_items_on_work_type`
+- `index_work_items_on_project_id_and_work_type` (composite)
+- `index_work_items_on_work_type_and_status` (composite)
+- `index_work_items_on_created_at`
 
 **Relationships:**
 - Belongs to `project`
@@ -157,6 +166,10 @@ The `runs` table tracks execution history of work items by agents.
 - `index_runs_on_work_item_id`
 - `index_runs_on_outcome`
 - `index_runs_on_agent_id_and_started_at` (composite)
+- `index_runs_on_work_item_id_and_started_at` (composite)
+- `index_runs_on_work_item_id_and_outcome` (composite)
+- `index_runs_on_created_at`
+- `index_runs_on_idempotency_key` (unique, partial)
 
 **Relationships:**
 - Belongs to `agent`
@@ -223,6 +236,39 @@ The `policies` table stores project-level configuration policies.
 - `ci_timeout` - CI/CD timeout configuration
 - `merge_strategy` - Git merge strategy
 
+---
+
+### Webhook Events
+
+The `webhook_events` table stores incoming GitHub webhook events for processing and debugging.
+
+| Column      | Type      | Nullable | Default | Description                                    |
+|-------------|-----------|----------|---------|------------------------------------------------|
+| id          | bigint    | NO       |         | Primary key                                    |
+| project_id  | bigint    | NO       |         | Foreign key to projects                        |
+| event_type  | string    | NO       |         | GitHub event type (e.g., 'issues', 'pull_request') |
+| delivery_id | string    | NO       |         | Unique GitHub delivery ID                      |
+| payload     | json      | NO       | {}      | Full webhook payload                           |
+| created_at  | datetime  | NO       |         | Record creation timestamp                      |
+| updated_at  | datetime  | NO       |         | Record last update timestamp                   |
+
+**Indexes:**
+- `index_webhook_events_on_project_id`
+- `index_webhook_events_on_project_id_and_event_type` (composite)
+- `index_webhook_events_on_project_id_and_created_at` (composite)
+- `index_webhook_events_on_delivery_id` (unique)
+- `index_webhook_events_on_event_type`
+
+**Relationships:**
+- Belongs to `project`
+
+**Event Types:**
+- `issues` - Issue events (opened, closed, labeled)
+- `pull_request` - Pull request events (opened, closed, merged)
+- `push` - Push events
+- `workflow_run` - GitHub Actions workflow run events
+- `check_suite` - Check suite completion events
+
 ## Foreign Key Relationships
 
 ```ruby
@@ -233,6 +279,7 @@ runs.agent_id → agents.id
 runs.work_item_id → work_items.id
 integrations.project_id → projects.id
 policies.project_id → projects.id
+webhook_events.project_id → projects.id
 ```
 
 ## Design Notes
@@ -249,9 +296,11 @@ Work items use a pessimistic locking strategy with `SELECT FOR UPDATE SKIP LOCKE
 Several tables use JSON columns for flexible, schema-less data:
 - `projects.gates_config` - Quality gate rules
 - `agents.capabilities` - Agent feature flags
+- `agents.prompt` - LLM prompt text (stored as text, not JSON)
 - `work_items.payload` - Work-specific parameters
 - `runs.costs` - Cost tracking metrics
 - `policies.value` - Policy configuration
+- `webhook_events.payload` - Webhook event data
 
 This allows for extensibility without schema migrations.
 
@@ -259,9 +308,11 @@ This allows for extensibility without schema migrations.
 
 Indexes are optimized for common query patterns:
 - Work item assignment queries (status + priority + locked_at)
-- Agent lookup by key and enabled state
+- Work item filtering by work_type and status
+- Agent lookup by key and enabled state (with caching)
 - Project lookup by slug
-- Run history queries (agent_id + started_at)
+- Run history queries (agent_id + started_at, work_item_id + started_at)
+- Webhook event queries (project_id + created_at)
 
 ## References
 

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Naming/PredicateMethod
-
 # Service to process GitHub webhook events
 # Handles issues, pull_request, push, workflow_run, and check_suite events
 class WebhookEventProcessor
@@ -15,8 +13,12 @@ class WebhookEventProcessor
 
   # Process the webhook event based on its type
   #
+  # This method returns a boolean indicating success/failure, but it's not a predicate
+  # (methods ending in ?) because it performs an action (processing the event).
+  # The boolean return value indicates whether processing completed successfully.
+  #
   # @return [Boolean] True if processed successfully
-  def process
+  def call
     case event_type
     when "issues"
       process_issue_event
@@ -240,22 +242,50 @@ class WebhookEventProcessor
 
   def update_run_from_check_suite(check_suite)
     # Check suites are GitHub's way of grouping related checks
-    # For now, we just log them as the mapping to runs is complex
-    # In production, you'd need a strategy to link check suites to runs
-    # (e.g., via PR head SHA, commit SHA, or check suite metadata)
+    # We link runs to check suites via the PR head SHA or commit SHA
     conclusion = check_suite["conclusion"]
     head_sha = check_suite["head_sha"]
+    pull_requests = check_suite["pull_requests"] || []
 
     Rails.logger.info(
       "Check suite #{check_suite['id']} completed: " \
       "conclusion=#{conclusion}, head_sha=#{head_sha}"
     )
 
-    # TODO: Implement run linking strategy when requirements are clearer
-    # Possible approaches:
-    # 1. Add head_sha field to runs table
-    # 2. Link via pull request association
-    # 3. Store check suite ID in run metadata
+    # Try to find run via associated pull request
+    pull_requests.each do |pr|
+      pr_url = pr["url"]&.gsub(%r{api\.github\.com/repos/}, "")
+        &.gsub(%r{/pulls/}, "/pull/")
+        &.gsub(%r{\.git$}, "")
+
+      next unless pr_url
+
+      # Find run by logs_url (which contains PR URL)
+      run = Run.joins(:work_item)
+        .where("runs.logs_url LIKE ?", "%#{pr_url}%")
+        .first
+
+      next unless run
+
+      outcome = case conclusion
+      when "success"
+        "success"
+      when "failure", "timed_out", "cancelled"
+        "failure"
+      else
+        nil
+      end
+
+      run.update!(
+        outcome: outcome,
+        finished_at: check_suite["updated_at"] ? Time.iso8601(check_suite["updated_at"]) : Time.current
+      )
+
+      return true
+    end
+
+    # If no PR found, log for manual review
+    Rails.logger.debug("Could not link check suite #{check_suite['id']} to any run")
     true
   end
 

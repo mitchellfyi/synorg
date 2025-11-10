@@ -16,11 +16,24 @@ FileUtils.chdir APP_ROOT do
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
 
+  # Clean up old gem versions to avoid unresolved spec warnings
+  # This is safe to run multiple times and only removes unused versions
+  # Clean up common gems that may have multiple versions installed
+  # Note: gem cleanup may fail if gem is not installed, which is fine
+  puts "\n== Cleaning up old gem versions =="
+  %w[stringio].each do |gem_name|
+    system("gem cleanup #{gem_name} 2>/dev/null") || true
+  end
+
   # Install JavaScript dependencies
   # Use yarn if yarn.lock exists, otherwise npm
   # Ensure optional dependencies are installed (required for @parcel/watcher)
+  #
+  # NOTE: NODE_OPTIONS='--no-deprecation' suppresses deprecation warnings from yarn's
+  # dependencies (not our code). This is a temporary workaround until yarn's dependencies
+  # are updated. The warnings don't affect functionality.
   if File.exist?("yarn.lock")
-    system!("yarn install")
+    system!("NODE_OPTIONS='--no-deprecation' yarn install")
   else
     system!("npm install")
   end

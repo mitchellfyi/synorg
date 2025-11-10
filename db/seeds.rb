@@ -18,7 +18,7 @@ Dir[Rails.root.join("db/seeds/agents/*.rb")].sort.each do |file|
 end
 
 # Create demo project with real GitHub repository
-# The PAT and webhook secret are stored directly in the project record
+# The PAT and webhook secret are loaded from Rails credentials
 project = Project.find_or_create_by!(slug: "synorg-demo") do |p|
   p.name = "Synorg Demo"
   p.state = "draft"
@@ -32,13 +32,11 @@ project = Project.find_or_create_by!(slug: "synorg-demo") do |p|
     - Work item creation and tracking
     - Agent execution and assignment
     - GitHub issue synchronization
-    - Workspace operations (clone, branch, commit, PR)
+    - GitHub API operations (create issues, PRs, files)
     - CI/CD integration
   BRIEF
   p.repo_full_name = "mitchellfyi/synorg-demo"
   p.repo_default_branch = "main"
-  p.github_pat = Rails.application.credentials.dig(:demo, :pat)
-  p.webhook_secret = Rails.application.credentials.dig(:demo, :webhook_secret)
   p.gates_config = {
     "require_review" => true,
     "require_tests" => true,
@@ -46,6 +44,19 @@ project = Project.find_or_create_by!(slug: "synorg-demo") do |p|
     "require_e2e" => false
   }
   p.e2e_required = false
+end
+
+# Always update PAT and webhook secret from credentials (even if project already exists)
+# This ensures the demo project always has the latest values from Rails credentials
+demo_pat = Rails.application.credentials.dig(:demo, :pat)
+demo_webhook_secret = Rails.application.credentials.dig(:demo, :webhook_secret)
+
+if demo_pat.present?
+  project.update_column(:github_pat, demo_pat)
+end
+
+if demo_webhook_secret.present?
+  project.update_column(:webhook_secret, demo_webhook_secret)
 end
 
 puts "✓ Created project: #{project.name} (#{project.slug})"

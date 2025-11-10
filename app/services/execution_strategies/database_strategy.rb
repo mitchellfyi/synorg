@@ -23,16 +23,16 @@ class DatabaseStrategy
       assigned_agent = find_agent(wi_data[:agent_key] || wi_data["agent_key"])
       next unless assigned_agent
 
+      work_type = wi_data[:work_type] || wi_data["work_type"]
       created_wi = WorkItem.find_or_initialize_by(
         project: project,
-        work_type: wi_data[:work_type] || wi_data["work_type"]
-      ).tap do |wi|
-        wi.status = "pending"
-        wi.priority = wi_data[:priority] || wi_data["priority"] || 5
-        wi.assigned_agent = assigned_agent
-        wi.payload = wi_data[:payload] || wi_data["payload"] || {}
-        wi.save!
-      end
+        work_type: work_type
+      )
+      created_wi.status = "pending"
+      created_wi.priority = wi_data[:priority] || wi_data["priority"] || 5
+      created_wi.assigned_agent = assigned_agent
+      created_wi.payload = wi_data[:payload] || wi_data["payload"] || {}
+      created_wi.save!
 
       created_work_items << created_wi
     end
@@ -56,6 +56,6 @@ class DatabaseStrategy
   def find_agent(agent_key)
     return nil unless agent_key
 
-    Agent.find_by(key: agent_key)
+    Agent.find_by_cached(agent_key)
   end
 end

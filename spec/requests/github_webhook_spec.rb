@@ -54,7 +54,7 @@ RSpec.describe "GitHub Webhooks", type: :request do
       end
 
       it "processes the event" do
-        expect_any_instance_of(WebhookEventProcessor).to receive(:process)
+        expect_any_instance_of(WebhookEventProcessor).to receive(:call)
 
         post "/github/webhook",
           headers: {
@@ -146,7 +146,7 @@ RSpec.describe "GitHub Webhooks", type: :request do
       let(:signature) { generate_signature(payload_json, webhook_secret) }
 
       it "returns internal server error" do
-        allow_any_instance_of(WebhookEventProcessor).to receive(:process).and_raise(StandardError, "Processing failed")
+        allow_any_instance_of(WebhookEventProcessor).to receive(:call).and_raise(StandardError, "Processing failed")
 
         post "/github/webhook",
           headers: {

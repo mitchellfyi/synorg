@@ -53,8 +53,11 @@ RUN bundle install && \
     bundle exec bootsnap precompile -j 1 --gemfile
 
 # Install node modules
+# NOTE: NODE_OPTIONS='--no-deprecation' suppresses deprecation warnings from yarn's
+# dependencies (not our code). This is a temporary workaround until yarn's dependencies
+# are updated. The warnings don't affect functionality.
 COPY package.json yarn.lock ./
-RUN yarn install --immutable
+RUN NODE_OPTIONS='--no-deprecation' yarn install --immutable
 
 # Copy application code
 COPY . .

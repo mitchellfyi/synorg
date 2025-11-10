@@ -1,0 +1,32 @@
+<li id="<%= dom_id(activity) %>" class="px-4 py-3 hover:bg-gray-50 transition-colors">
+  <div class="flex items-start gap-3">
+    <div class="flex-shrink-0 text-xl">
+      <%= activity.activity_icon %>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium <%= activity.activity_color %>">
+          <%= activity_description(activity) %>
+        </span>
+        <span class="text-xs text-gray-500">
+          <%= time_ago_in_words(activity.created_at) %> ago
+        </span>
+      </div>
+      <% if activity.owner %>
+        <div class="mt-1 text-xs text-gray-500">
+          by <%= activity.owner.respond_to?(:name) ? activity.owner.name : activity.owner_type %>
+        </div>
+      <% end %>
+      <% params = activity.parameters || {} %>
+      <% if params.present? && params.any? { |k, v| k.to_s != "title" && v.present? } %>
+        <details class="mt-2">
+          <summary class="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800">Show details</summary>
+          <div class="mt-2 p-2 bg-gray-50 rounded text-xs font-mono text-gray-700 max-h-32 overflow-y-auto">
+            <pre><%= JSON.pretty_generate(params) %></pre>
+          </div>
+        </details>
+      <% end %>
+    </div>
+  </div>
+</li>
+

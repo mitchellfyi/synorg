@@ -8,5 +8,6 @@ FactoryBot.define do
     capabilities { {} }
     max_concurrency { 1 }
     enabled { true }
+    prompt { "Test prompt for agent" }
   end
 end

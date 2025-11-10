@@ -73,14 +73,15 @@ Claims the next available work item for the specified agent.
 
 **Side effects:**
 - Updates work item status to `in_progress`
+- Sets `assigned_agent` to the requesting agent
 - Sets `locked_at` timestamp
-- Sets `locked_by_agent` reference
+- Sets `locked_by_agent` to the requesting agent
 - Creates a `Run` record with `started_at` timestamp
 
 **Example:**
 
 ```ruby
-agent = Agent.find_by(key: "code-reviewer")
+agent = Agent.find_by_cached("code-reviewer")  # Uses cached lookup
 work_item = AssignmentService.lease_next_work_item(agent)
 
 if work_item
@@ -106,7 +107,7 @@ Releases a locked work item (typically on timeout or error before completion).
 **Side effects:**
 - Clears `locked_at` timestamp
 - Clears `locked_by_agent` reference
-- Work item returns to the queue for another agent to claim
+- **Note**: The work item status remains `in_progress`; only the lock is released. To return the work item to the queue, you may need to manually reset the status to `pending` if desired.
 
 **Example:**
 
@@ -326,6 +327,6 @@ AssignmentService.lease_next_work_item(agent)
 
 ## Related Documentation
 
-- [Workspace Management](/docs/runtime/workspaces.md) - How agents execute work in isolated Git workspaces
+- [GitHub Integration](/docs/integrations/github.md) - How agents interact with GitHub API
 - [Domain Model](/docs/domain/model.md) - Complete data model overview
 - [GitHub Integration](/docs/integrations/github.md) - GitHub API and webhook handling

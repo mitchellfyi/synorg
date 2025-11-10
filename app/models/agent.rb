@@ -14,4 +14,22 @@ class Agent < ApplicationRecord
   validates :max_concurrency, numericality: { greater_than: 0 }
 
   scope :enabled, -> { where(enabled: true) }
+
+  # Cache agent lookups by key since agents are global and don't change frequently
+  # Cache is invalidated when agent is updated or destroyed
+  def self.find_by_cached(key)
+    Rails.cache.fetch("agent:#{key}", expires_in: 1.hour) do
+      find_by(key: key)
+    end
+  end
+
+  # Clear cache when agent is updated or destroyed
+  after_update :clear_cache
+  after_destroy :clear_cache
+
+  private
+
+  def clear_cache
+    Rails.cache.delete("agent:#{key}")
+  end
 end
