@@ -1,5 +1,44 @@
 {
-  "ignored_warnings": [],
-  "updated": "2025-11-10 00:00:00 +0000",
+  "ignored_warnings": [
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 15,
+      "fingerprint": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/runs/_run_row.html.erb",
+      "line": 55,
+      "link": "https://brakemanscanner.org/docs/warning_types/15/",
+      "code": "link_to(\"Logs\", Run.new.safe_logs_url, :target => \"_blank\", :class => \"text-indigo-600 hover:text-indigo-900\", :rel => \"noopener\")",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "runs/_run_row"
+      },
+      "user_input": "Run.new.safe_logs_url",
+      "confidence": "Weak",
+      "note": "safe_logs_url validates URLs before returning them, preventing XSS"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 15,
+      "fingerprint": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/runs/_run_row.html.erb",
+      "line": 68,
+      "link": "https://brakemanscanner.org/docs/warning_types/15/",
+      "code": "link_to(\"Artifacts\", Run.new.safe_artifacts_url, :target => \"_blank\", :class => \"text-indigo-600 hover:text-indigo-900\", :rel => \"noopener\")",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "runs/_run_row"
+      },
+      "user_input": "Run.new.safe_artifacts_url",
+      "confidence": "Weak",
+      "note": "safe_artifacts_url validates URLs before returning them, preventing XSS"
+    }
+  ],
+  "updated": "2025-11-10 22:45:00 +0000",
   "brakeman_version": "7.1.1"
 }
