@@ -128,6 +128,7 @@ RSpec.describe GitHubApiStrategy do
     end
 
     context "with create_pr operation" do
+      let(:work_item) { create(:work_item, project: project, payload: {}) }
       let(:parsed_response) do
         {
           type: "github_operations",
