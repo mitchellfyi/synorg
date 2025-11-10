@@ -1,0 +1,170 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe "GitHub Webhooks", type: :request do
+  let!(:project) { create(:project, webhook_secret_name: "TEST_WEBHOOK_SECRET") }
+  let(:webhook_secret) { "test-secret-123" }
+  let(:delivery_id) { "12345-67890-abcdef" }
+
+  let(:valid_payload) do
+    {
+      action: "opened",
+      issue: {
+        number: 123,
+        title: "Test Issue",
+        body: "Test body",
+        state: "open",
+        labels: [],
+        html_url: "https://github.com/test/repo/issues/123"
+      }
+    }
+  end
+
+  let(:payload_json) { valid_payload.to_json }
+
+  before do
+    # Mock the secret fetch
+    allow_any_instance_of(GithubWebhookController).to receive(:fetch_secret).with("TEST_WEBHOOK_SECRET").and_return(webhook_secret)
+  end
+
+  def generate_signature(payload, secret)
+    "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", secret, payload)
+  end
+
+  describe "POST /github/webhook" do
+    context "with valid signature" do
+      let(:signature) { generate_signature(payload_json, webhook_secret) }
+
+      it "accepts the webhook and creates a webhook event" do
+        expect do
+          post "/github/webhook",
+            headers: {
+              "X-GitHub-Event" => "issues",
+              "X-Hub-Signature-256" => signature,
+              "X-GitHub-Delivery" => delivery_id,
+              "CONTENT_TYPE" => "application/json",
+              "CONTENT_LENGTH" => payload_json.bytesize.to_s
+            },
+            env: { "rack.input" => StringIO.new(payload_json) }
+        end.to change(WebhookEvent, :count).by(1)
+
+        expect(response).to have_http_status(:accepted)
+
+        webhook_event = WebhookEvent.last
+        expect(webhook_event.project).to eq(project)
+        expect(webhook_event.event_type).to eq("issues")
+        expect(webhook_event.delivery_id).to eq(delivery_id)
+        expect(webhook_event.payload["action"]).to eq("opened")
+      end
+
+      it "processes the event" do
+        expect_any_instance_of(WebhookEventProcessor).to receive(:process)
+
+        post "/github/webhook",
+          headers: {
+            "X-GitHub-Event" => "issues",
+            "X-Hub-Signature-256" => signature,
+            "X-GitHub-Delivery" => delivery_id,
+            "CONTENT_TYPE" => "application/json",
+            "CONTENT_LENGTH" => payload_json.bytesize.to_s
+          },
+          env: { "rack.input" => StringIO.new(payload_json) }
+      end
+    end
+
+    context "with invalid signature" do
+      it "rejects the webhook" do
+        expect do
+          post "/github/webhook",
+            headers: {
+              "X-GitHub-Event" => "issues",
+              "X-Hub-Signature-256" => "sha256=invalid",
+              "X-GitHub-Delivery" => delivery_id,
+              "CONTENT_TYPE" => "application/json",
+              "CONTENT_LENGTH" => payload_json.bytesize.to_s
+            },
+            env: { "rack.input" => StringIO.new(payload_json) }
+        end.not_to change(WebhookEvent, :count)
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context "with missing signature" do
+      it "rejects the webhook" do
+        expect do
+          post "/github/webhook",
+            headers: {
+              "X-GitHub-Event" => "issues",
+              "X-GitHub-Delivery" => delivery_id,
+              "CONTENT_TYPE" => "application/json",
+              "CONTENT_LENGTH" => payload_json.bytesize.to_s
+            },
+            env: { "rack.input" => StringIO.new(payload_json) }
+        end.not_to change(WebhookEvent, :count)
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context "with unsupported event type" do
+      let(:signature) { generate_signature(payload_json, webhook_secret) }
+
+      it "rejects unsupported event type before persistence" do
+        expect do
+          post "/github/webhook",
+            headers: {
+              "X-GitHub-Event" => "unsupported_event",
+              "X-Hub-Signature-256" => signature,
+              "X-GitHub-Delivery" => delivery_id,
+              "CONTENT_TYPE" => "application/json",
+              "CONTENT_LENGTH" => payload_json.bytesize.to_s
+            },
+            env: { "rack.input" => StringIO.new(payload_json) }
+        end.not_to change(WebhookEvent, :count)
+
+        expect(response).to have_http_status(:accepted)
+      end
+    end
+
+    context "with invalid JSON" do
+      let(:invalid_json) { "invalid json" }
+      let(:signature) { generate_signature(invalid_json, webhook_secret) }
+
+      it "returns bad request" do
+        post "/github/webhook",
+          headers: {
+            "X-GitHub-Event" => "issues",
+            "X-Hub-Signature-256" => signature,
+            "X-GitHub-Delivery" => delivery_id,
+            "CONTENT_TYPE" => "application/json",
+            "CONTENT_LENGTH" => invalid_json.bytesize.to_s
+          },
+          env: { "rack.input" => StringIO.new(invalid_json) }
+
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+
+    context "when an error occurs during processing" do
+      let(:signature) { generate_signature(payload_json, webhook_secret) }
+
+      it "returns internal server error" do
+        allow_any_instance_of(WebhookEventProcessor).to receive(:process).and_raise(StandardError, "Processing failed")
+
+        post "/github/webhook",
+          headers: {
+            "X-GitHub-Event" => "issues",
+            "X-Hub-Signature-256" => signature,
+            "X-GitHub-Delivery" => delivery_id,
+            "CONTENT_TYPE" => "application/json",
+            "CONTENT_LENGTH" => payload_json.bytesize.to_s
+          },
+          env: { "rack.input" => StringIO.new(payload_json) }
+
+        expect(response).to have_http_status(:internal_server_error)
+      end
+    end
+  end
+end
