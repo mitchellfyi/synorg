@@ -1,0 +1,241 @@
+<% content_for :title, @agent.name %>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <%= link_to agents_path, class: "text-sm text-gray-500 hover:text-gray-700 mb-2 inline-block" do %>
+        ← Back to Agents
+      <% end %>
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-3">
+            <h1 class="text-3xl font-bold text-gray-900">
+              <%= @agent.name %>
+            </h1>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= @agent.enabled? ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800" %>">
+              <%= @agent.enabled? ? "Enabled" : "Disabled" %>
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-gray-500">
+            <span class="font-mono"><%= @agent.key %></span>
+            <% if @agent.description.present? %>
+              • <%= @agent.description %>
+            <% end %>
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <%= link_to edit_agent_path(@agent), class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit
+          <% end %>
+          <%= button_to toggle_enabled_agent_path(@agent), method: :post, class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white #{@agent.enabled? ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'} border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+            <%= @agent.enabled? ? "Disable" : "Enable" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Total Runs</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @stats[:total_runs] %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Successful</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @stats[:successful_runs] %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Failed</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @stats[:failed_runs] %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">In Progress</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @stats[:in_progress_runs] %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Recent Runs -->
+      <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <h2 class="text-lg font-medium text-gray-900">Recent Runs</h2>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% if @recent_runs.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @recent_runs.each do |run| %>
+                <li class="px-4 py-4">
+                  <%= link_to [run.work_item.project, run], class: "block hover:bg-gray-50 -mx-4 px-4 py-2 rounded" do %>
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">
+                          <%= run.work_item.payload["title"] || "Work Item ##{run.work_item.id}" %>
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500">
+                          <%= run.work_item.project.name || run.work_item.project.slug %>
+                          <% if run.started_at %>
+                            • <%= time_ago_in_words(run.started_at) %> ago
+                          <% end %>
+                        </p>
+                      </div>
+                      <div class="ml-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= run_status_badge_class(run.outcome) %>">
+                          <%= run_status_text(run.outcome, run.started_at, run.finished_at) %>
+                        </span>
+                      </div>
+                    </div>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="px-4 py-5 sm:px-6 text-center text-gray-500">
+              <p class="text-sm">No runs yet</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Assigned Work Items -->
+      <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <h2 class="text-lg font-medium text-gray-900">Assigned Work Items</h2>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% if @assigned_work_items.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @assigned_work_items.each do |work_item| %>
+                <li class="px-4 py-4">
+                  <%= link_to [work_item.project, work_item], class: "block hover:bg-gray-50 -mx-4 px-4 py-2 rounded" do %>
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">
+                          <%= work_item.payload["title"] || work_item.work_type.humanize %>
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500">
+                          <%= work_item.project.name || work_item.project.slug %>
+                          • <%= work_item.status.titleize %>
+                        </p>
+                      </div>
+                      <div class="ml-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium <%= work_item.status == "in_progress" ? "bg-blue-100 text-blue-800" : work_item.status == "completed" ? "bg-green-100 text-green-800" : work_item.status == "failed" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800" %>">
+                          <%= work_item.status.titleize %>
+                        </span>
+                      </div>
+                    </div>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="px-4 py-5 sm:px-6 text-center text-gray-500">
+              <p class="text-sm">No assigned work items</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent Details -->
+    <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Agent Details</h2>
+      </div>
+      <div class="px-4 py-5 sm:px-6 space-y-4">
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Key</dt>
+          <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @agent.key %></dd>
+        </div>
+        <% if @agent.description.present? %>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Description</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @agent.description %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Max Concurrency</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @agent.max_concurrency %></dd>
+        </div>
+        <% if @agent.prompt.present? %>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Prompt</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              <div class="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                <pre class="whitespace-pre-wrap text-xs"><%= @agent.prompt %></pre>
+              </div>
+            </dd>
+          </div>
+        <% end %>
+        <% if @agent.capabilities.present? %>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Capabilities</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              <div class="bg-gray-50 rounded-lg p-4">
+                <pre class="text-xs"><%= JSON.pretty_generate(@agent.capabilities) %></pre>
+              </div>
+            </dd>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

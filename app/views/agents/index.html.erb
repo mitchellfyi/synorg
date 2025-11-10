@@ -1,0 +1,61 @@
+<% content_for :title, "Agents" %>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Agents</h1>
+      <p class="mt-2 text-sm text-gray-700">Manage your AI agents and monitor their status</p>
+    </div>
+
+    <% if @agents.any? %>
+      <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <ul class="divide-y divide-gray-200">
+          <% @agents.each do |agent| %>
+            <li class="px-6 py-4 hover:bg-gray-50 transition-colors">
+              <div class="flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-3">
+                    <%= link_to agent_path(agent), class: "flex-1 min-w-0" do %>
+                      <div class="flex items-center gap-2">
+                        <h3 class="text-lg font-medium text-gray-900 truncate">
+                          <%= agent.name %>
+                        </h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= agent.enabled? ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800" %>">
+                          <%= agent.enabled? ? "Enabled" : "Disabled" %>
+                        </span>
+                      </div>
+                      <p class="mt-1 text-sm text-gray-500 truncate">
+                        <span class="font-mono text-xs"><%= agent.key %></span>
+                        <% if agent.description.present? %>
+                          • <%= agent.description %>
+                        <% end %>
+                      </p>
+                    <% end %>
+                  </div>
+                  <div class="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                    <span><%= pluralize(agent.runs.count, "run") %></span>
+                    <span>• <%= pluralize(agent.assigned_work_items.count, "work item") %></span>
+                    <span>• Max concurrency: <%= agent.max_concurrency %></span>
+                  </div>
+                </div>
+                <div class="ml-4 flex items-center gap-2">
+                  <%= link_to agent_path(agent), class: "inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+                    View Details
+                  <% end %>
+                </div>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% else %>
+      <div class="text-center py-12 bg-white rounded-lg shadow">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No agents</h3>
+        <p class="mt-1 text-sm text-gray-500">Agents will appear here once they are created.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,189 @@
+<% content_for :title, "Work Item - #{@work_item.payload['title'] || @work_item.work_type.humanize}" %>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <%= link_to project_path(@project), class: "text-sm text-gray-500 hover:text-gray-700 mb-2 inline-block" do %>
+        ← Back to Project
+      <% end %>
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-3">
+            <h1 class="text-3xl font-bold text-gray-900">
+              <%= @work_item.payload["title"] || @work_item.work_type.humanize || "Work Item ##{@work_item.id}" %>
+            </h1>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= @work_item.status == "in_progress" ? "bg-blue-100 text-blue-800" : @work_item.status == "completed" ? "bg-green-100 text-green-800" : @work_item.status == "failed" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800" %>">
+              <%= @work_item.status.titleize %>
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-gray-500">
+            <%= @work_item.work_type %>
+            • Priority: <%= @work_item.priority %>
+            <% if @work_item.assigned_agent %>
+              • Agent: <%= @work_item.assigned_agent.name %>
+            <% end %>
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <% if @work_item.status == "failed" %>
+            <%= button_to retry_project_work_item_path(@project, @work_item), method: :post, class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Retry
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Work Item Details -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Details</h2>
+          </div>
+          <div class="px-4 py-5 sm:px-6 space-y-4">
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Work Type</dt>
+              <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @work_item.work_type %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Status</dt>
+              <dd class="mt-1">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= @work_item.status == "in_progress" ? "bg-blue-100 text-blue-800" : @work_item.status == "completed" ? "bg-green-100 text-green-800" : @work_item.status == "failed" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800" %>">
+                  <%= @work_item.status.titleize %>
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Priority</dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @work_item.priority %></dd>
+            </div>
+            <% if @work_item.assigned_agent %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Assigned Agent</dt>
+                <dd class="mt-1">
+                  <%= link_to agent_path(@work_item.assigned_agent), class: "text-sm text-indigo-600 hover:text-indigo-900" do %>
+                    <%= @work_item.assigned_agent.name %>
+                  <% end %>
+                </dd>
+              </div>
+            <% end %>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Created</dt>
+              <dd class="mt-1 text-sm text-gray-900">
+                <time datetime="<%= @work_item.created_at.iso8601 %>">
+                  <%= @work_item.created_at.strftime("%B %d, %Y at %l:%M %p") %>
+                </time>
+                (<%= time_ago_in_words(@work_item.created_at) %> ago)
+              </dd>
+            </div>
+            <% if @work_item.payload.present? %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Payload</dt>
+                <dd class="mt-1">
+                  <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <pre class="text-xs font-mono whitespace-pre-wrap"><%= JSON.pretty_generate(@work_item.payload) %></pre>
+                  </div>
+                </dd>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Runs -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Runs</h2>
+            <p class="mt-1 text-sm text-gray-500">Execution history for this work item</p>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <% if @runs.any? %>
+              <ul class="divide-y divide-gray-200">
+                <% @runs.each do |run| %>
+                  <li class="px-4 py-4">
+                    <%= link_to [@project, run], class: "block hover:bg-gray-50 -mx-4 px-4 py-2 rounded" do %>
+                      <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2">
+                            <span class="font-medium text-gray-900"><%= run.agent.name %></span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= run_status_badge_class(run.outcome) %>">
+                              <%= run_status_text(run.outcome, run.started_at, run.finished_at) %>
+                            </span>
+                          </div>
+                          <p class="mt-1 text-xs text-gray-500">
+                            <% if run.started_at %>
+                              Started <%= time_ago_in_words(run.started_at) %> ago
+                              <% if run.finished_at %>
+                                • Duration: <%= run_duration(run.started_at, run.finished_at) %>
+                              <% end %>
+                            <% end %>
+                          </p>
+                        </div>
+                        <div class="ml-4">
+                          <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <div class="px-4 py-5 sm:px-6 text-center text-gray-500">
+                <p class="text-sm">No runs yet</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="lg:col-span-1 space-y-6">
+        <!-- Project Info -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Project</h2>
+          </div>
+          <div class="px-4 py-5 sm:px-6">
+            <%= link_to project_path(@project), class: "text-sm font-medium text-indigo-600 hover:text-indigo-900" do %>
+              <%= @project.name || @project.slug %>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- GitHub Links -->
+        <% if @work_item.payload["github_issue_url"] || @work_item.payload["github_pr_url"] %>
+          <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+              <h2 class="text-lg font-medium text-gray-900">GitHub</h2>
+            </div>
+            <div class="px-4 py-5 sm:px-6 space-y-2">
+              <% if @work_item.payload["github_issue_url"] %>
+                <%= link_to @work_item.payload["github_issue_url"], target: "_blank", rel: "noopener", class: "inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-900" do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Issue #<%= @work_item.payload["github_issue_number"] %>
+                <% end %>
+              <% end %>
+              <% if @work_item.payload["github_pr_url"] %>
+                <%= link_to @work_item.payload["github_pr_url"], target: "_blank", rel: "noopener", class: "inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-900" do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  PR #<%= @work_item.payload["github_pr_number"] %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

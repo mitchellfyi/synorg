@@ -1,19 +1,19 @@
 <tr id="<%= dom_id(run) %>" class="hover:bg-gray-50">
   <td class="px-6 py-4 whitespace-nowrap">
-    <div class="flex items-center">
-      <div>
-        <div class="text-sm font-medium text-gray-900">
-          <%= run.agent.name %>
-        </div>
-        <div class="text-xs text-gray-500">
-          <%= run.agent.key %>
-        </div>
-      </div>
+    <div class="text-sm font-medium text-gray-900">
+      <%= link_to [run.work_item.project, run], class: "hover:text-indigo-600" do %>
+        <%= run.agent.name %>
+      <% end %>
+    </div>
+    <div class="text-xs text-gray-500 font-mono">
+      <%= run.agent.key %>
     </div>
   </td>
-  <td class="px-6 py-4">
+  <td class="px-6 py-4 whitespace-nowrap">
     <div class="text-sm text-gray-900">
-      <%= run.work_item.payload["title"] || "Work Item ##{run.work_item.id}" %>
+      <%= link_to [run.work_item.project, run.work_item], class: "hover:text-indigo-600" do %>
+        <%= run.work_item.payload["title"] || "Work Item ##{run.work_item.id}" %>
+      <% end %>
     </div>
     <div class="text-xs text-gray-500">
       <%= run.work_item.work_type %>

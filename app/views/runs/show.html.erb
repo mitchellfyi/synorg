@@ -1,0 +1,177 @@
+<% content_for :title, "Run - #{@run.agent.name}" %>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <%= link_to project_runs_path(@project), class: "text-sm text-gray-500 hover:text-gray-700 mb-2 inline-block" do %>
+        ← Back to Runs
+      <% end %>
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-3">
+            <h1 class="text-3xl font-bold text-gray-900">
+              Run by <%= @run.agent.name %>
+            </h1>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= run_status_badge_class(@run.outcome) %>">
+              <%= run_status_text(@run.outcome, @run.started_at, @run.finished_at) %>
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-gray-500">
+            <%= link_to [@project, @run.work_item], class: "text-indigo-600 hover:text-indigo-900" do %>
+              <%= @run.work_item.payload["title"] || @run.work_item.work_type.humanize || "Work Item ##{@run.work_item.id}" %>
+            <% end %>
+            <% if @run.started_at %>
+              • Started <%= time_ago_in_words(@run.started_at) %> ago
+            <% end %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Run Details -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Run Details</h2>
+          </div>
+          <div class="px-4 py-5 sm:px-6 space-y-4">
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Agent</dt>
+              <dd class="mt-1">
+                <%= link_to agent_path(@run.agent), class: "text-sm text-indigo-600 hover:text-indigo-900" do %>
+                  <%= @run.agent.name %> (<span class="font-mono"><%= @run.agent.key %></span>)
+                <% end %>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Work Item</dt>
+              <dd class="mt-1">
+                <%= link_to [@project, @run.work_item], class: "text-sm text-indigo-600 hover:text-indigo-900" do %>
+                  <%= @run.work_item.payload["title"] || @run.work_item.work_type.humanize || "Work Item ##{@run.work_item.id}" %>
+                <% end %>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Status</dt>
+              <dd class="mt-1">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= run_status_badge_class(@run.outcome) %>">
+                  <%= run_status_text(@run.outcome, @run.started_at, @run.finished_at) %>
+                </span>
+              </dd>
+            </div>
+            <% if @run.started_at %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Started</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  <time datetime="<%= @run.started_at.iso8601 %>">
+                    <%= @run.started_at.strftime("%B %d, %Y at %l:%M %p") %>
+                  </time>
+                </dd>
+              </div>
+            <% end %>
+            <% if @run.finished_at %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Finished</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  <time datetime="<%= @run.finished_at.iso8601 %>">
+                    <%= @run.finished_at.strftime("%B %d, %Y at %l:%M %p") %>
+                  </time>
+                </dd>
+              </div>
+            <% end %>
+            <% if @run.started_at && @run.finished_at %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Duration</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= run_duration(@run.started_at, @run.finished_at) %></dd>
+              </div>
+            <% end %>
+            <% if @run.github_pr_number %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">GitHub PR</dt>
+                <dd class="mt-1">
+                  <% pr_url = @run.work_item.payload["github_pr_url"] || (@project.repo_full_name && "https://github.com/#{@project.repo_full_name}/pull/#{@run.github_pr_number}") %>
+                  <% if pr_url %>
+                    <%= link_to pr_url, target: "_blank", rel: "noopener", class: "text-sm text-indigo-600 hover:text-indigo-900" do %>
+                      PR #<%= @run.github_pr_number %>
+                    <% end %>
+                  <% else %>
+                    PR #<%= @run.github_pr_number %>
+                  <% end %>
+                </dd>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Logs -->
+        <% if @run.logs.present? || @run.safe_logs_url.present? %>
+          <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+              <h2 class="text-lg font-medium text-gray-900">Logs</h2>
+            </div>
+            <div class="px-4 py-5 sm:px-6">
+              <% if @run.safe_logs_url.present? %>
+                <%= link_to @run.safe_logs_url, target: "_blank", rel: "noopener", class: "inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-900 mb-4" do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  View logs externally
+                <% end %>
+              <% end %>
+              <% if @run.logs.present? %>
+                <div class="bg-gray-900 rounded-lg p-4 max-h-96 overflow-y-auto">
+                  <pre class="text-xs font-mono text-green-400 whitespace-pre-wrap"><%= @run.logs %></pre>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="lg:col-span-1 space-y-6">
+        <!-- Project Info -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Project</h2>
+          </div>
+          <div class="px-4 py-5 sm:px-6">
+            <%= link_to project_path(@project), class: "text-sm font-medium text-indigo-600 hover:text-indigo-900" do %>
+              <%= @project.name || @project.slug %>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Links -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Links</h2>
+          </div>
+          <div class="px-4 py-5 sm:px-6 space-y-2">
+            <%= link_to [@project, @run.work_item], class: "block text-sm text-indigo-600 hover:text-indigo-900" do %>
+              View Work Item
+            <% end %>
+            <% if @run.safe_artifacts_url.present? %>
+              <%= link_to @run.safe_artifacts_url, target: "_blank", rel: "noopener", class: "block text-sm text-indigo-600 hover:text-indigo-900" do %>
+                View Artifacts
+              <% end %>
+            <% end %>
+            <% if @run.work_item.payload["github_issue_url"] %>
+              <%= link_to @run.work_item.payload["github_issue_url"], target: "_blank", rel: "noopener", class: "block text-sm text-indigo-600 hover:text-indigo-900" do %>
+                View GitHub Issue
+              <% end %>
+            <% end %>
+            <% if @run.work_item.payload["github_pr_url"] %>
+              <%= link_to @run.work_item.payload["github_pr_url"], target: "_blank", rel: "noopener", class: "block text-sm text-indigo-600 hover:text-indigo-900" do %>
+                View GitHub PR
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

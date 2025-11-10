@@ -17,7 +17,19 @@ Rails.application.routes.draw do
     member do
       post :trigger_orchestrator
     end
-    resources :runs, only: [:index]
+    resources :work_items, only: [:show] do
+      member do
+        post :retry
+      end
+    end
+    resources :runs, only: [:index, :show]
+  end
+
+  # Agents management
+  resources :agents, only: [:index, :show, :edit, :update] do
+    member do
+      post :toggle_enabled
+    end
   end
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)

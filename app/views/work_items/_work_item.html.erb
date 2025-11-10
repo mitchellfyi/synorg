@@ -9,9 +9,11 @@
           <%= work_item.work_type %>
         </span>
       </div>
-      <p class="mt-1 text-sm font-medium text-gray-900">
-        <%= work_item.payload["title"] || work_item.work_type.humanize || "Work Item ##{work_item.id}" %>
-      </p>
+      <%= link_to [work_item.project, work_item], class: "block" do %>
+        <p class="mt-1 text-sm font-medium text-gray-900 hover:text-indigo-600">
+          <%= work_item.payload["title"] || work_item.work_type.humanize || "Work Item ##{work_item.id}" %>
+        </p>
+      <% end %>
       <div class="mt-1 flex items-center gap-3 text-xs text-gray-500">
         <span>Priority: <%= work_item.priority %></span>
         <% if work_item.assigned_agent %>

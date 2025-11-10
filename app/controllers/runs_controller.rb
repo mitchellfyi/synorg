@@ -2,6 +2,7 @@
 
 class RunsController < ApplicationController
   before_action :set_project
+  before_action :set_run, only: [:show]
 
   def index
     @runs = Run.joins(:work_item)
@@ -11,9 +12,19 @@ class RunsController < ApplicationController
                .limit(100)
   end
 
+  def show
+    # Run details with full logs
+  end
+
   private
 
   def set_project
     @project = Project.find(params[:project_id])
+  end
+
+  def set_run
+    @run = Run.joins(:work_item)
+              .where(work_items: { project_id: @project.id })
+              .find(params[:id])
   end
 end
