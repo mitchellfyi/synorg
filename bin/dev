@@ -5,6 +5,11 @@ if gem list --no-installed --exact --silent foreman; then
   gem install foreman
 fi
 
+# Load .env file if it exists (for ngrok configuration, etc.)
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
 # Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
 

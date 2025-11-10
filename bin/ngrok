@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+# Wrapper script for ngrok that uses PORT environment variable
+# Falls back to port 3000 if PORT is not set
+# Outputs logs to stdout for visibility in foreman/Procfile.dev
+#
+# To use a static domain, set one of these environment variables:
+#   NGROK_SUBDOMAIN=myapp  (for reserved subdomain, e.g., myapp.ngrok.io)
+#   NGROK_HOSTNAME=app.example.com  (for custom domain)
+#
+# Reserved subdomains require an ngrok paid plan.
+# See: https://dashboard.ngrok.com/get-started/your-authtoken
+
+PORT="${PORT:-3000}"
+NGROK_ARGS="--log=stdout --log-level=info"
+
+# Add subdomain if configured
+if [ -n "$NGROK_SUBDOMAIN" ]; then
+  NGROK_ARGS="$NGROK_ARGS --subdomain=$NGROK_SUBDOMAIN"
+fi
+
+# Add hostname if configured (takes precedence over subdomain)
+if [ -n "$NGROK_HOSTNAME" ]; then
+  NGROK_ARGS="$NGROK_ARGS --hostname=$NGROK_HOSTNAME"
+fi
+
+exec ngrok http "$PORT" $NGROK_ARGS
+
