@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# This seed file is idempotent: it can be run multiple times safely.
+# AgentSeeder.seed_agent uses find_or_initialize_by to ensure agents are created
+# or updated without creating duplicates. Prompts are always updated if provided.
+
 load Rails.root.join("db/seeds/agents/helpers.rb")
 
 AgentSeeder.seed_agent(

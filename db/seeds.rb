@@ -7,6 +7,9 @@
 return if Rails.env.test?
 
 # Load agent seed files (each agent has its own seed file)
+# NOTE: Agents are GLOBAL resources - they are not tied to any specific project.
+# Agents can be used by any project through work items. The orchestrator agent
+# can assign agents to work items as needed.
 Dir[Rails.root.join("db/seeds/agents/*.rb")].sort.each do |file|
   # Skip helpers.rb as it's loaded by individual seed files
   next if file.include?("helpers.rb")
@@ -47,7 +50,8 @@ end
 
 puts "✓ Created project: #{project.name} (#{project.slug})"
 
-# Agents are seeded from db/seeds/agents/*.rb files
+# Agents are global resources seeded above (not project-specific)
+# They can be used by any project through work items assigned by the orchestrator
 puts "✓ Available agents: #{Agent.count} total"
 puts "   - #{Agent.enabled.pluck(:key).join(', ')}"
 

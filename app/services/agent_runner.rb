@@ -37,7 +37,7 @@ class AgentRunner
     # Build context for LLM
     context = build_context
 
-    # Call LLM with prompt and context (stub for now)
+    # Call LLM with prompt and context
     llm_response = call_llm(prompt, context)
 
     # Parse LLM response
@@ -96,14 +96,18 @@ class AgentRunner
   end
 
   def call_llm(prompt, context)
-    # Try to use LLM service if available
     llm_service = LlmService.new
     response = llm_service.chat(prompt: prompt, context: context)
 
-    # If LLM returned an error or no content, fall back to legacy services
+    # If LLM returned an error or no content, return error response
     if response[:error] || response[:content].blank?
-      Rails.logger.warn("LLM service unavailable or returned error, falling back to legacy service")
-      return generate_stub_response(prompt, context)
+      error_msg = response[:error] || "LLM returned empty response"
+      Rails.logger.error("LLM service error: #{error_msg}")
+      return {
+        llm_content: nil,
+        usage: response[:usage] || {},
+        error: error_msg
+      }
     end
 
     # Return LLM response content for parsing
@@ -112,210 +116,23 @@ class AgentRunner
       usage: response[:usage]
     }
   rescue StandardError => e
-    Rails.logger.warn("Failed to call LLM, falling back to legacy service: #{e.message}")
-    generate_stub_response(prompt, context)
-  end
-
-  def generate_stub_response(prompt, context)
-    # Bridge to legacy service classes for now
-    # In production, this would call an LLM API and parse the response
-    # For now, we delegate to legacy services that have the actual implementation
-    legacy_service = find_legacy_service
-    if legacy_service
-      return execute_legacy_service(legacy_service)
-    end
-
-    # Fallback stub implementation
-    case work_item.work_type
-    when /_setup$/, "repo_bootstrap"
-      {
-        type: "workspace_changes",
-        changes: []
-      }
-    when "gtm", "docs"
-      {
-        type: "file_writes",
-        files: []
-      }
-    when "product_manager", "orchestrator"
-      {
-        type: "work_items",
-        work_items: []
-      }
-    when "issue"
-      {
-        type: "github_operations",
-        operations: []
-      }
-    else
-      {
-        type: "unknown",
-        message: "No implementation for work_type: #{work_item.work_type}"
-      }
-    end
-  end
-
-  def find_legacy_service
-    # Map work_type to legacy service class
-    service_class = case work_item.work_type
-                    when "dependabot_setup"
-                      DependabotSetupAgentService
-                    when "ci_setup"
-                      CiWorkflowSetupAgentService
-                    when "rails_setup"
-                      RailsAppSetupAgentService
-                    when "repo_bootstrap"
-                      RepoBootstrapAgentService
-                    when "gtm"
-                      GtmAgentService
-                    when "docs"
-                      DocsAgentService
-                    when "product_manager"
-                      ProductManagerAgentService
-                    when "issue"
-                      IssueAgentService
-                    when "dev_tooling"
-                      DevToolingAgentService
-                    else
-                      nil
-                    end
-
-    return nil unless service_class
-
-    # Instantiate the legacy service with appropriate arguments
-    case work_item.work_type
-    when /_setup$/, "repo_bootstrap"
-      # Setup agents need project, agent, work_item
-      service_class.new(project, agent, work_item)
-    when "gtm"
-      # GTM needs project_brief
-      service_class.new(project.brief, agent: agent)
-    when "docs"
-      # Docs needs project_brief
-      service_class.new(project.brief, agent: agent)
-    when "product_manager"
-      # Product Manager needs project
-      service_class.new(project, agent: agent)
-    when "issue"
-      # Issue needs project
-      service_class.new(project, agent: agent)
-    when "dev_tooling"
-      # Dev Tooling needs no args
-      service_class.new(agent: agent)
-    else
-      nil
-    end
-  end
-
-  def execute_legacy_service(legacy_service)
-    # For setup agents, extract changes without executing
-    # For other agents, execute and convert response
-    case work_item.work_type
-    when /_setup$/, "repo_bootstrap"
-      # Setup agents: extract changes, don't execute (strategy will handle execution)
-      changes = extract_changes_from_legacy_service(legacy_service)
-      {
-        type: "workspace_changes",
-        changes: changes
-      }
-    when "gtm", "docs"
-      # File-writing agents: execute and extract files
-      result = legacy_service.run
-      if result[:success]
-        {
-          type: "file_writes",
-          files: extract_files_from_legacy_service(legacy_service, result)
-        }
-      else
-        {
-          type: "error",
-          error: result[:error]
-        }
-      end
-    when "product_manager"
-      # Product Manager: execute (creates work items), return success
-      result = legacy_service.run
-      if result[:success]
-        {
-          type: "work_items",
-          work_items: [] # Already created by legacy service
-        }
-      else
-        {
-          type: "error",
-          error: result[:error]
-        }
-      end
-    when "issue"
-      # Issue agent: execute (creates GitHub issues), return success
-      result = legacy_service.run
-      if result[:success]
-        {
-          type: "github_operations",
-          operations: [] # Already performed by legacy service
-        }
-      else
-        {
-          type: "error",
-          error: result[:error]
-        }
-      end
-    else
-      {
-        type: "unknown",
-        message: "Unknown work_type: #{work_item.work_type}"
-      }
-    end
-  end
-
-  def extract_changes_from_legacy_service(legacy_service)
-    # Extract file changes from legacy setup service
-    # Setup services implement generate_changes method that returns:
-    # { message:, pr_title:, pr_body:, files: [...] }
-    return { message: "", pr_title: "", pr_body: "", files: [] } unless legacy_service.respond_to?(:generate_changes, true)
-
-    changes = legacy_service.send(:generate_changes)
+    Rails.logger.error("Failed to call LLM: #{e.message}\n#{e.backtrace.join("\n")}")
     {
-      message: changes[:message] || "",
-      pr_title: changes[:pr_title] || "",
-      pr_body: changes[:pr_body] || "",
-      files: changes[:files] || []
+      llm_content: nil,
+      usage: {},
+      error: e.message
     }
-  rescue StandardError => e
-    Rails.logger.error("Failed to extract changes from legacy service: #{e.message}")
-    { message: "", pr_title: "", pr_body: "", files: [] }
   end
 
-  def extract_files_from_legacy_service(legacy_service, result)
-    # Extract file paths and content from legacy file-writing service
-    files = []
-
-    if result[:file_path]
-      # Single file (GTM)
-      files << {
-        path: result[:file_path].to_s.gsub(Rails.root.to_s + "/", ""),
-        content: File.read(result[:file_path]) if File.exist?(result[:file_path])
-      }
-    elsif result[:files_updated]
-      # Multiple files (Docs)
-      result[:files_updated].each do |file_path|
-        full_path = Rails.root.join(file_path)
-        files << {
-          path: file_path,
-          content: File.read(full_path) if File.exist?(full_path)
-        }
-      end
-    end
-
-    files
-  rescue StandardError => e
-    Rails.logger.error("Failed to extract files from legacy service: #{e.message}")
-    []
-  end
 
   def parse_llm_response(response)
-    # If response is from legacy service (no llm_content), return as-is
-    return response unless response[:llm_content]
+    # Handle error responses
+    if response[:error] || response[:llm_content].blank?
+      return {
+        type: "error",
+        error: response[:error] || "LLM returned empty response"
+      }
+    end
 
     # Try to parse LLM response as JSON
     # The LLM should return structured JSON matching the expected format
@@ -327,10 +144,10 @@ class AgentRunner
     rescue JSON::ParserError => e
       Rails.logger.error("Failed to parse LLM response as JSON: #{e.message}")
       Rails.logger.debug("LLM response content: #{response[:llm_content]}")
-
-      # Fall back to legacy service if JSON parsing fails
-      Rails.logger.warn("Falling back to legacy service due to JSON parse error")
-      generate_stub_response("", {})
+      {
+        type: "error",
+        error: "Failed to parse LLM response as JSON: #{e.message}"
+      }
     end
   end
 
