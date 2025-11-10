@@ -1,0 +1,186 @@
+<% content_for :title, @project.name || @project.slug %>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <%= link_to projects_path, class: "text-sm text-gray-500 hover:text-gray-700 mb-2 inline-block" do %>
+            ← Back to Projects
+          <% end %>
+          <div class="flex items-center">
+            <h1 class="text-3xl font-bold text-gray-900">
+              <%= @project.name || @project.slug %>
+            </h1>
+            <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= state_badge_class(@project.state) %>">
+              <%= @project.state.titleize %>
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-gray-500">
+            <%= @project.slug %>
+            <% if @project.repo_full_name.present? %>
+              • <%= @project.repo_full_name %>
+            <% end %>
+          </p>
+        </div>
+        <div>
+          <%= link_to "View Runs", project_runs_path(@project), class: "inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Project Brief -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Project Brief</h2>
+          </div>
+          <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <% if @project.brief.present? %>
+              <div class="prose prose-sm max-w-none">
+                <%= simple_format(@project.brief) %>
+              </div>
+            <% else %>
+              <p class="text-gray-500 italic">No brief provided</p>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Event Timeline -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
+          </div>
+          <div class="border-t border-gray-200">
+            <% if @recent_runs.any? %>
+              <div class="flow-root px-4 py-5 sm:px-6">
+                <ul role="list" class="-mb-8">
+                  <% @recent_runs.each_with_index do |run, index| %>
+                    <li>
+                      <div class="relative pb-8">
+                        <% unless index == @recent_runs.length - 1 %>
+                          <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                        <% end %>
+                        <div class="relative flex space-x-3">
+                          <div>
+                            <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white <%= run.outcome == "success" ? "bg-green-500" : run.outcome == "failure" ? "bg-red-500" : "bg-blue-500" %>">
+                              <% if run.outcome == "success" %>
+                                <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                              <% elsif run.outcome == "failure" %>
+                                <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                              <% else %>
+                                <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                </svg>
+                              <% end %>
+                            </span>
+                          </div>
+                          <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                            <div>
+                              <p class="text-sm text-gray-900">
+                                Agent <strong><%= run.agent.name %></strong> ran for
+                                <strong><%= run.work_item.payload["title"] || "work item ##{run.work_item.id}" %></strong>
+                              </p>
+                              <p class="mt-0.5 text-xs text-gray-500">
+                                <%= run_status_text(run.outcome, run.started_at, run.finished_at) %>
+                                <% if run.started_at %>
+                                  • Duration: <%= run_duration(run.started_at, run.finished_at) %>
+                                <% end %>
+                              </p>
+                            </div>
+                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                              <% if run.started_at %>
+                                <time datetime="<%= run.started_at.iso8601 %>">
+                                  <%= time_ago_in_words(run.started_at) %> ago
+                                </time>
+                              <% else %>
+                                <span>Not started</span>
+                              <% end %>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            <% else %>
+              <div class="px-4 py-5 sm:px-6 text-center text-gray-500">
+                <p>No activity yet</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="lg:col-span-1 space-y-6">
+        <!-- Quick Stats -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Quick Stats</h2>
+          </div>
+          <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <dl class="space-y-4">
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Open Work Items</dt>
+                <dd class="mt-1 text-2xl font-semibold text-gray-900">
+                  <%= @open_work_items.count %>
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Total Runs</dt>
+                <dd class="mt-1 text-2xl font-semibold text-gray-900">
+                  <%= @total_runs_count %>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Next Steps / Open Work Items -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Next Steps</h2>
+          </div>
+          <div class="border-t border-gray-200">
+            <% if @open_work_items.any? %>
+              <ul role="list" class="divide-y divide-gray-200">
+                <% @open_work_items.limit(5).each do |work_item| %>
+                  <li class="px-4 py-3">
+                    <div class="flex items-start">
+                      <div class="flex-shrink-0">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= work_item.status == "in_progress" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800" %>">
+                          <%= work_item.status.titleize %>
+                        </span>
+                      </div>
+                      <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900">
+                          <%= work_item.payload["title"] || "Work Item ##{work_item.id}" %>
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500">
+                          Priority: <%= work_item.priority %>
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <div class="px-4 py-5 sm:px-6 text-center text-gray-500">
+                <p class="text-sm">No pending work items</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

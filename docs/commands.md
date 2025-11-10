@@ -239,14 +239,37 @@ git rebase origin/main
 
 ## Git Hooks (Lefthook)
 
+**IMPORTANT: Git hooks are REQUIRED and enforce code quality, security, and test standards.**
+
 ```bash
-# Install hooks (run after cloning or when lefthook.yml changes)
-lefthook install
+# Install hooks (REQUIRED after cloning or when lefthook.yml changes)
+lefthook install -f
 
 # Run hooks manually
-lefthook run pre-commit    # Run pre-commit checks
-lefthook run commit-msg    # Validate commit message
-lefthook run pre-push      # Run full test suite
+lefthook run pre-commit    # Auto-fixes linting on staged files
+lefthook run commit-msg    # Validates commit message (Conventional Commits)
+lefthook run pre-push      # Runs lint + security + tests (MUST PASS before push)
+
+# What each hook does:
+# - pre-commit: RuboCop, ERB Lint, ESLint, Prettier (auto-fixes and stages)
+# - commit-msg: Enforces Conventional Commits format
+# - pre-push: bin/lint + bin/brakeman + bin/test (blocks push if any fail)
+
+# Bypass hooks (EMERGENCY ONLY - not recommended!)
+git commit --no-verify -m "emergency fix"
+git push --no-verify
+```
+
+**Pre-push Requirements (ALL must pass):**
+1. `bin/lint` - All linting must pass (RuboCop, ERB Lint, ESLint, Prettier, TypeScript)
+2. `bin/brakeman --no-pager` - No new security vulnerabilities
+3. `bin/test` - All RSpec tests must pass
+
+**If pre-push fails:**
+- Fix the issues reported by the failing command
+- Re-run the specific command to verify the fix: `bin/lint`, `bin/brakeman`, or `bin/test`
+- Commit the fixes and try pushing again
+- DO NOT use `--no-verify` to bypass hooks unless it's a genuine emergency
 
 # Uninstall hooks
 lefthook uninstall

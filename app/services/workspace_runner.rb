@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Naming/PredicateMethod
+
 require "digest"
 require "fileutils"
 require "open3"
@@ -107,14 +109,12 @@ class WorkspaceRunner
 
   def generate_idempotency_key
     # Generate key based on work item, agent, and content hash
-    # rubocop:disable GitHub/InsecureHashAlgorithm
     content_digest = Digest::SHA256.hexdigest([
       work_item.id,
       work_item.work_type,
       work_item.payload.to_json,
       agent.key
     ].join(":"))
-    # rubocop:enable GitHub/InsecureHashAlgorithm
 
     "run:#{work_item.id}:#{agent.key}:#{content_digest}"
   end
@@ -327,7 +327,7 @@ class WorkspaceRunner
   end
 
   def build_default_pr_body
-    description = work_item.payload['description']
+    description = work_item.payload["description"]
 
     <<~BODY
       ## Automated Agent Work

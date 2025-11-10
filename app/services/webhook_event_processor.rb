@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Naming/PredicateMethod
+
 # Service to process GitHub webhook events
 # Handles issues, pull_request, push, workflow_run, and check_suite events
 class WebhookEventProcessor
@@ -31,6 +33,13 @@ class WebhookEventProcessor
       false
     end
   end
+
+  # GitHub issue reference patterns
+  # Matches common patterns like "Fixes #123", "Closes #456", etc.
+  ISSUE_REFERENCE_PATTERN = /
+    (?:fix(?:es|ed)?|close(?:s|d)?|resolve(?:s|d)?)
+    \s+\#(\d+)
+  /ix
 
   private
 
@@ -249,13 +258,6 @@ class WebhookEventProcessor
     # 3. Store check suite ID in run metadata
     true
   end
-
-  # GitHub issue reference patterns
-  # Matches common patterns like "Fixes #123", "Closes #456", etc.
-  ISSUE_REFERENCE_PATTERN = /
-    (?:fix(?:es|ed)?|close(?:s|d)?|resolve(?:s|d)?)
-    \s+\#(\d++)
-  /ix
 
   def extract_issue_number_from_pr(pull_request)
     body = pull_request["body"] || ""

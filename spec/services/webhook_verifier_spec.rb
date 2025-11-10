@@ -39,7 +39,9 @@ RSpec.describe WebhookVerifier do
 
   describe ".verify_sha1" do
     it "verifies a valid SHA1 signature" do
+      # rubocop:disable GitHub/InsecureHashAlgorithm
       signature = OpenSSL::HMAC.hexdigest("SHA1", secret, payload)
+      # rubocop:enable GitHub/InsecureHashAlgorithm
       full_signature = "sha1=#{signature}"
 
       result = described_class.verify_sha1(payload, full_signature, secret)
