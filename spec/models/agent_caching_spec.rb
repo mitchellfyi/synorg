@@ -12,25 +12,27 @@ RSpec.describe Agent, "caching" do
     end
 
     it "caches agent lookups" do
+      # Clear cache first
+      Rails.cache.delete("agent:test-agent")
+
       # First call should hit database
-      expect(Agent).to receive(:find_by).with(key: "test-agent").and_call_original
-      result1 = Agent.find_by_cached("test-agent")
+      expect(described_class).to receive(:find_by).with(key: "test-agent").and_call_original.once
+      result1 = described_class.find_by_cached "test-agent")
       expect(result1).to eq(agent)
 
-      # Second call should use cache
-      expect(Agent).not_to receive(:find_by)
-      result2 = Agent.find_by_cached("test-agent")
+      # Second call should use cache (no additional find_by call)
+      result2 = described_class.find_by_cached "test-agent")
       expect(result2).to eq(agent)
     end
 
     it "returns nil for non-existent agents" do
-      result = Agent.find_by_cached("non-existent")
+      result = described_class.find_by_cached "non-existent")
       expect(result).to be_nil
     end
 
     it "invalidates cache on update" do
       # Cache the agent
-      Agent.find_by_cached("test-agent")
+      described_class.find_by_cached "test-agent")
 
       # Update should clear cache
       expect(Rails.cache).to receive(:delete).with("agent:test-agent")
@@ -39,22 +41,25 @@ RSpec.describe Agent, "caching" do
 
     it "invalidates cache on destroy" do
       # Cache the agent
-      Agent.find_by_cached("test-agent")
+      described_class.find_by_cached "test-agent")
 
       # Destroy should clear cache
       expect(Rails.cache).to receive(:delete).with("agent:test-agent")
-      agent.destroy
+      agent.destroy!
     end
 
     it "expires cache after 1 hour" do
+      # Clear cache first
+      Rails.cache.delete("agent:test-agent")
+
       # Cache the agent
-      Agent.find_by_cached("test-agent")
+      described_class.find_by_cached "test-agent")
 
       # Travel forward in time
       travel 2.hours do
         # Should hit database again after expiration
-        expect(Agent).to receive(:find_by).with(key: "test-agent").and_call_original
-        Agent.find_by_cached("test-agent")
+        expect(described_class).to receive(:find_by).with(key: "test-agent").and_call_original
+        described_class.find_by_cached "test-agent")
       end
     end
   end

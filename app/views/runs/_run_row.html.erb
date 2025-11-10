@@ -38,10 +38,23 @@
   </td>
   <td class="px-6 py-4 whitespace-nowrap text-sm">
     <div class="flex space-x-2">
+      <% if run.github_pr_number || run.work_item.payload["github_pr_url"] %>
+        <% pr_url = run.work_item.payload["github_pr_url"] || (run.work_item.project.repo_full_name && "https://github.com/#{run.work_item.project.repo_full_name}/pull/#{run.github_pr_number}") %>
+        <% if pr_url %>
+          <%= link_to "PR", pr_url,
+              target: "_blank",
+              class: "text-indigo-600 hover:text-indigo-900", rel: "noopener" %>
+        <% end %>
+      <% end %>
+      <% if run.work_item.payload["github_issue_url"] %>
+        <%= link_to "Issue", run.work_item.payload["github_issue_url"],
+            target: "_blank",
+            class: "text-indigo-600 hover:text-indigo-900", rel: "noopener" %>
+      <% end %>
       <% if run.logs_url.present? %>
         <%= link_to "Logs", run.logs_url,
             target: "_blank",
-            class: "text-indigo-600 hover:text-indigo-900" %>
+            class: "text-indigo-600 hover:text-indigo-900", rel: "noopener" %>
       <% elsif run.logs.present? %>
         <button type="button"
                 data-controller="modal"
@@ -54,9 +67,8 @@
       <% if run.artifacts_url.present? %>
         <%= link_to "Artifacts", run.artifacts_url,
             target: "_blank",
-            class: "text-indigo-600 hover:text-indigo-900" %>
+            class: "text-indigo-600 hover:text-indigo-900", rel: "noopener" %>
       <% end %>
     </div>
   </td>
 </tr>
-

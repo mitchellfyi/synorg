@@ -28,6 +28,7 @@ class GitHubApiStrategy
 
     github_service = GithubService.new(project.repo_full_name, pat)
     operations_performed = []
+    pr_info = nil
 
     operations.each do |op|
       case op[:operation] || op["operation"]
@@ -37,19 +38,26 @@ class GitHubApiStrategy
       when "create_pr"
         result = create_pr(github_service, op)
         operations_performed << result if result
+        pr_info = result if result && result[:type] == "pull_request"
       when "create_files_and_pr"
         result = create_files_and_pr(github_service, op)
         operations_performed << result if result
+        pr_info = result if result && result[:type] == "pull_request"
       else
         Rails.logger.warn("Unknown GitHub operation: #{op[:operation]}")
       end
     end
 
-    {
+    result_hash = {
       success: true,
       message: "Successfully performed #{operations_performed.count} GitHub operations",
       operations_performed: operations_performed.count
     }
+    
+    # Include PR info if a PR was created
+    result_hash[:pr_info] = pr_info if pr_info
+    
+    result_hash
   rescue StandardError => e
     Rails.logger.error("GitHubApiStrategy failed: #{e.message}")
     {
@@ -62,9 +70,12 @@ class GitHubApiStrategy
 
   def create_issue(github_service, op_data)
     title = op_data[:title] || op_data["title"]
-    body = op_data[:body] || op_data["body"]
+    labels = op_data[:labels] || op_data["labels"] || ["agent-created"]
 
     return nil unless title
+
+    # Build issue body with work item context
+    issue_body = op_data[:body] || op_data["body"] || build_issue_body(op_data)
 
     # Use GitHub API to create issue
     uri = URI("https://api.github.com/repos/#{project.repo_full_name}/issues")
@@ -72,7 +83,11 @@ class GitHubApiStrategy
     request["Authorization"] = "Bearer #{project.github_pat}"
     request["Accept"] = "application/vnd.github.v3+json"
     request["Content-Type"] = "application/json"
-    request.body = { title: title, body: body }.to_json
+    request.body = {
+      title: title,
+      body: issue_body,
+      labels: labels
+    }.to_json
 
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
       http.request(request)
@@ -85,6 +100,12 @@ class GitHubApiStrategy
 
     issue = JSON.parse(response.body)
 
+    # Assign issue to Copilot
+    assignment_result = github_service.assign_issue_to_copilot(issue["number"])
+    if assignment_result.nil?
+      Rails.logger.warn("Failed to assign issue #{issue['number']} to Copilot - Copilot may not be available")
+    end
+
     # Update work item payload with issue number
     updated_payload = work_item.payload.merge(
       "github_issue_number" => issue["number"],
@@ -96,7 +117,8 @@ class GitHubApiStrategy
       type: "issue",
       issue_number: issue["number"],
       title: title,
-      url: issue["html_url"]
+      url: issue["html_url"],
+      labels: labels
     }
   rescue StandardError => e
     Rails.logger.error("Failed to create issue: #{e.message}")
@@ -111,6 +133,11 @@ class GitHubApiStrategy
 
     return nil unless title && head
 
+    # Enhance PR title with work item title if available
+    if work_item.payload["title"].present? && !title.include?(work_item.payload["title"])
+      title = "#{title}: #{work_item.payload['title']}"
+    end
+
     pr = github_service.create_pull_request(
       title: title,
       body: body,
@@ -119,6 +146,9 @@ class GitHubApiStrategy
     )
 
     return nil unless pr
+
+    # Get PR head SHA
+    pr_head_sha = pr["head"]&.dig("sha")
 
     # Update work item payload with PR information
     updated_payload = work_item.payload.merge(
@@ -130,6 +160,7 @@ class GitHubApiStrategy
     {
       type: "pull_request",
       pr_number: pr["number"],
+      pr_head_sha: pr_head_sha,
       title: title,
       url: pr["html_url"]
     }
@@ -152,7 +183,7 @@ class GitHubApiStrategy
     branch_name = "agent/#{agent.key}-#{SecureRandom.hex(8)}"
 
     # Get base branch SHA
-    base_sha = get_branch_sha(base_branch)
+    base_sha = github_service.get_branch_sha(base_branch)
     return nil unless base_sha
 
     # Create branch
@@ -184,6 +215,16 @@ class GitHubApiStrategy
 
     return nil unless pr
 
+    # Get PR head SHA
+    pr_head_sha = pr["head"]&.dig("sha")
+
+    # Enhance PR title with work item title if available
+    if work_item.payload["title"].present? && !pr_title.include?(work_item.payload["title"])
+      pr_title = "#{pr_title}: #{work_item.payload['title']}"
+      # Update PR title if we enhanced it
+      # Note: We could update the PR via API, but for now we'll just use the enhanced title in our records
+    end
+
     # Update work item payload with PR information
     updated_payload = work_item.payload.merge(
       "github_pr_number" => pr["number"],
@@ -196,6 +237,7 @@ class GitHubApiStrategy
     {
       type: "pull_request",
       pr_number: pr["number"],
+      pr_head_sha: pr_head_sha,
       title: pr_title,
       url: pr["html_url"],
       branch: branch_name,
@@ -310,11 +352,51 @@ class GitHubApiStrategy
 
   def build_default_pr_body
     description = work_item.payload["description"] || work_item.payload["title"] || ""
+    issue_number = work_item.payload["github_issue_number"]
+    
     parts = []
     parts << description if description.present?
+    
+    # Add issue reference if available
+    if issue_number
+      parts << "\n\nFixes ##{issue_number}"
+    end
+    
     parts << "\n\n---"
     parts << "\n\nThis PR was automatically created by #{agent.name}."
     parts << "\n\nGitHub Copilot will handle the code review and implementation."
+    parts.join("\n")
+  end
+
+  def build_issue_body(op_data)
+    parts = []
+    
+    # Add description from work item or operation data
+    description = op_data[:description] || op_data["description"] || 
+                  work_item.payload["description"] || 
+                  work_item.payload["title"] || ""
+    parts << description if description.present?
+    
+    # Add acceptance criteria if available
+    acceptance_criteria = op_data[:acceptance_criteria] || op_data["acceptance_criteria"] ||
+                          work_item.payload["acceptance_criteria"]
+    if acceptance_criteria.present?
+      parts << "\n\n## Acceptance Criteria"
+      if acceptance_criteria.is_a?(Array)
+        acceptance_criteria.each do |criterion|
+          parts << "\n- #{criterion}"
+        end
+      else
+        parts << "\n#{acceptance_criteria}"
+      end
+    end
+    
+    # Add work item context
+    parts << "\n\n---"
+    parts << "\n\n**Work Item ID**: ##{work_item.id}"
+    parts << "\n**Agent**: #{agent.name}"
+    parts << "\n**Project**: #{project.name || project.slug}"
+    
     parts.join("\n")
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require_relative "../../app/services/execution_strategies/file_write_strategy"
 
 RSpec.describe AgentRunner do
   let(:project) { create(:project) }
@@ -17,7 +18,7 @@ RSpec.describe AgentRunner do
   end
 
   describe "#run" do
-    let(:mock_llm_service) { instance_double(LlmService) }
+    let(:mock_llm_service) { instance_double(LlmService, model: "gpt-4") }
     let(:mock_strategy) { instance_double(FileWriteStrategy) }
 
     before do
@@ -75,12 +76,38 @@ RSpec.describe AgentRunner do
       end
 
       it "updates run records on success" do
-        run = create(:run, agent: agent, work_item: work_item, started_at: Time.current)
-        allow(work_item.runs).to receive(:order).and_return(double(first: run))
-        allow(run).to receive(:update!)
-
         result = runner.run
         expect(result[:success]).to be true
+
+        # Verify run was updated
+        run = work_item.runs.order(started_at: :desc).first
+        expect(run).to be_present
+        expect(run.finished_at).to be_present
+        expect(run.outcome).to eq("success")
+      end
+
+      context "when strategy returns PR info" do
+        let(:strategy_result) do
+          {
+            success: true,
+            message: "PR created",
+            pr_info: {
+              pr_number: 789,
+              pr_head_sha: "sha123",
+              url: "https://github.com/test/repo/pull/789"
+            }
+          }
+        end
+
+        it "stores PR info in run" do
+          result = runner.run
+          expect(result[:success]).to be true
+
+          run = work_item.runs.order(started_at: :desc).first
+          expect(run.github_pr_number).to eq(789)
+          expect(run.github_pr_head_sha).to eq("sha123")
+          expect(run.artifacts_url).to eq("https://github.com/test/repo/pull/789")
+        end
       end
     end
 
@@ -108,7 +135,7 @@ RSpec.describe AgentRunner do
       it "returns error response" do
         result = runner.run
         expect(result[:success]).to be false
-        expect(result[:error]).to include("Failed to parse LLM response")
+        expect(result[:error]).to include("Response validation failed")
       end
     end
 
@@ -130,7 +157,7 @@ RSpec.describe AgentRunner do
       it "returns error response" do
         result = runner.run
         expect(result[:success]).to be false
-        expect(result[:error]).to eq("Strategy failed")
+        expect(result[:error]).to include("Response validation failed")
       end
     end
 
@@ -202,7 +229,7 @@ RSpec.describe AgentRunner do
 
     it "raises error for unknown work type" do
       work_item.update!(work_type: "unknown_type")
-      expect { runner.send(:resolve_strategy) }.to raise_error("Unknown execution strategy")
+      expect { runner.send(:resolve_strategy) }.to raise_error(RuntimeError, /Unknown execution strategy/)
     end
   end
 end

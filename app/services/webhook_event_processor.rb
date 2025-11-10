@@ -19,6 +19,17 @@ class WebhookEventProcessor
   #
   # @return [Boolean] True if processed successfully
   def call
+    process
+  end
+
+  # Process the webhook event based on its type
+  #
+  # This method returns a boolean indicating success/failure, but it's not a predicate
+  # (methods ending in ?) because it performs an action (processing the event).
+  # The boolean return value indicates whether processing completed successfully.
+  #
+  # @return [Boolean] True if processed successfully
+  def process
     case event_type
     when "issues"
       process_issue_event
@@ -61,7 +72,7 @@ class WebhookEventProcessor
     when "closed"
       mark_work_item_completed(issue)
     else
-      Rails.logger.debug("Ignoring issue action: #{action}")
+      Rails.logger.debug { "Ignoring issue action: #{action}" }
     end
 
     true
@@ -79,7 +90,7 @@ class WebhookEventProcessor
     when "closed"
       update_run_outcome(pull_request)
     else
-      Rails.logger.debug("Ignoring pull request action: #{action}")
+      Rails.logger.debug { "Ignoring pull request action: #{action}" }
     end
 
     true
@@ -123,18 +134,19 @@ class WebhookEventProcessor
     return unless issue_number
 
     # Use PostgreSQL JSON query to find existing work item
+    # Standardize on github_issue_number key
     work_item = project.work_items
       .where(work_type: "issue")
-      .where("payload->>'issue_number' = ?", issue_number.to_s)
+      .where("payload->>'github_issue_number' = ? OR payload->>'issue_number' = ?", issue_number.to_s, issue_number.to_s)
       .first_or_initialize
 
     work_item.payload = (work_item.payload || {}).merge({
-      issue_number: issue["number"],
+      github_issue_number: issue["number"],
+      github_issue_url: issue["html_url"],
       title: issue["title"],
       body: issue["body"],
-      labels: issue["labels"]&.map { |l| l["name"] } || [],
-      state: issue["state"],
-      html_url: issue["html_url"]
+      labels: issue["labels"]&.pluck("name") || [],
+      state: issue["state"]
     })
 
     work_item.status = issue["state"] == "open" ? "pending" : "completed"
@@ -144,9 +156,10 @@ class WebhookEventProcessor
   end
 
   def mark_work_item_completed(issue)
+    issue_number = issue["number"]
     work_item = project.work_items
       .where(work_type: "issue")
-      .where("payload->>'issue_number' = ?", issue["number"].to_s)
+      .where("payload->>'github_issue_number' = ? OR payload->>'issue_number' = ?", issue_number.to_s, issue_number.to_s)
       .first
 
     return unless work_item
@@ -156,56 +169,78 @@ class WebhookEventProcessor
 
   def create_run_from_pull_request(pull_request)
     # Find the associated work item from the PR body or linked issue
-    # For now, we'll look for issue references in the PR body
     issue_number = extract_issue_number_from_pr(pull_request)
 
     return unless issue_number
 
     work_item = project.work_items
       .where(work_type: "issue")
-      .where("payload->>'issue_number' = ?", issue_number.to_s)
+      .where("payload->>'github_issue_number' = ? OR payload->>'issue_number' = ?", issue_number.to_s, issue_number.to_s)
       .first
 
     return unless work_item
     return unless work_item.assigned_agent
 
+    pr_number = pull_request["number"]
+    pr_head_sha = pull_request["head"]&.dig("sha")
+
     # Find existing run or create new one, handling potential race conditions
-    begin
-      run = work_item.runs.find_or_create_by!(agent: work_item.assigned_agent) do |r|
-        r.started_at = Time.current
+    # Try to find by PR number first (most reliable)
+    run = work_item.runs.find_by(github_pr_number: pr_number) if pr_number
+
+    unless run
+      begin
+        run = work_item.runs.find_or_create_by!(agent: work_item.assigned_agent) do |r|
+          r.started_at = Time.current
+        end
+      rescue ActiveRecord::RecordNotUnique
+        # If a duplicate is attempted due to race, fetch the existing run
+        run = work_item.runs.find_by(agent: work_item.assigned_agent)
       end
-    rescue ActiveRecord::RecordNotUnique
-      # If a duplicate is attempted due to race, fetch the existing run
-      run = work_item.runs.find_by(agent: work_item.assigned_agent)
     end
 
-    run.update!(
-      logs_url: pull_request["html_url"]
-    )
+    # Update run with PR information
+    update_hash = {
+      logs_url: pull_request["html_url"],
+      artifacts_url: pull_request["html_url"]
+    }
+    update_hash[:github_pr_number] = pr_number if pr_number
+    update_hash[:github_pr_head_sha] = pr_head_sha if pr_head_sha
+
+    run.update!(update_hash)
 
     run
   end
 
   def update_run_outcome(pull_request)
-    issue_number = extract_issue_number_from_pr(pull_request)
+    pr_number = pull_request["number"]
+    pr_head_sha = pull_request["head"]&.dig("sha")
 
-    return unless issue_number
+    # Find run by PR number (most reliable)
+    run = Run.find_by(github_pr_number: pr_number) if pr_number
 
-    work_item = project.work_items
-      .where(work_type: "issue")
-      .where("payload->>'issue_number' = ?", issue_number.to_s)
-      .first
+    # Fall back to head SHA if PR number not found
+    run ||= Run.find_by(github_pr_head_sha: pr_head_sha) if pr_head_sha
 
-    return unless work_item
+    # Fall back to issue-based lookup
+    unless run
+      issue_number = extract_issue_number_from_pr(pull_request)
+      return unless issue_number
 
-    # Find the run associated with this PR by matching the logs_url
-    # which was set to the PR URL when the run was created
-    pr_url = pull_request["html_url"]
-    run = work_item.runs.find_by(logs_url: pr_url)
+      work_item = project.work_items
+        .where(work_type: "issue")
+        .where("payload->>'github_issue_number' = ? OR payload->>'issue_number' = ?", issue_number.to_s, issue_number.to_s)
+        .first
 
-    # If no run found by URL, fall back to the most recent run
-    # This handles cases where the run was created before the PR was opened
-    run ||= work_item.runs.order(created_at: :desc).first
+      return unless work_item
+
+      # Find by PR URL
+      pr_url = pull_request["html_url"]
+      run = work_item.runs.find_by(logs_url: pr_url)
+
+      # Last resort: most recent run
+      run ||= work_item.runs.order(created_at: :desc).first
+    end
 
     return unless run
 
@@ -216,16 +251,88 @@ class WebhookEventProcessor
     )
 
     # Mark work item as completed if PR was merged
-    work_item.update!(status: "completed") if pull_request["merged"]
+    if pull_request["merged"]
+      work_item = run.work_item
+      work_item.update!(status: "completed")
+    end
   end
 
   def update_run_from_workflow(workflow_run)
-    # Find runs by logs_url or other identifier
-    # This is a simplified implementation
-    conclusion = workflow_run["conclusion"]
-    logs_url = workflow_run["html_url"]
+    # Find run by PR number or head SHA from workflow run
+    pull_requests = workflow_run["pull_requests"] || []
+    head_sha = workflow_run["head_sha"] || workflow_run["head_commit"]&.dig("id")
 
-    run = Run.find_by(logs_url: logs_url)
+    run = nil
+
+    # Try to find by PR number first
+    pull_requests.each do |pr|
+      pr_number = pr["number"]
+      next unless pr_number
+
+      run = Run.find_by(github_pr_number: pr_number)
+      break if run
+    end
+
+    # Fall back to head SHA
+    run ||= Run.find_by(github_pr_head_sha: head_sha) if head_sha
+
+    # Last resort: try logs_url matching
+    unless run
+      logs_url = workflow_run["html_url"]
+      run = Run.find_by(logs_url: logs_url) if logs_url
+    end
+
+    return unless run
+
+    conclusion = workflow_run["conclusion"]
+    outcome = case conclusion
+    when "success"
+      "success"
+    when "failure", "timed_out", "cancelled"
+      "failure"
+    else
+      nil
+    end
+
+    # Store check suite ID if available
+    update_hash = {
+      outcome: outcome,
+      finished_at: workflow_run["updated_at"] ? Time.iso8601(workflow_run["updated_at"]) : Time.current
+    }
+    update_hash[:github_check_suite_id] = workflow_run["check_suite_id"] if workflow_run["check_suite_id"]
+
+    run.update!(update_hash)
+  end
+
+  def update_run_from_check_suite(check_suite)
+    # Check suites are GitHub's way of grouping related checks
+    # We link runs to check suites via the PR head SHA or commit SHA
+    conclusion = check_suite["conclusion"]
+    head_sha = check_suite["head_sha"]
+    check_suite_id = check_suite["id"]
+    pull_requests = check_suite["pull_requests"] || []
+
+    Rails.logger.info(
+      "Check suite #{check_suite_id} completed: " \
+      "conclusion=#{conclusion}, head_sha=#{head_sha}"
+    )
+
+    run = nil
+
+    # Try to find run via PR number (most reliable)
+    pull_requests.each do |pr|
+      pr_number = pr["number"]
+      next unless pr_number
+
+      run = Run.find_by(github_pr_number: pr_number)
+      break if run
+    end
+
+    # Fall back to head SHA
+    run ||= Run.find_by(github_pr_head_sha: head_sha) if head_sha
+
+    # Fall back to check suite ID (if we've stored it before)
+    run ||= Run.find_by(github_check_suite_id: check_suite_id) if check_suite_id
 
     return unless run
 
@@ -239,57 +346,11 @@ class WebhookEventProcessor
     end
 
     run.update!(
+      github_check_suite_id: check_suite_id,
       outcome: outcome,
-      finished_at: workflow_run["updated_at"] ? Time.iso8601(workflow_run["updated_at"]) : Time.current
-    )
-  end
-
-  def update_run_from_check_suite(check_suite)
-    # Check suites are GitHub's way of grouping related checks
-    # We link runs to check suites via the PR head SHA or commit SHA
-    conclusion = check_suite["conclusion"]
-    head_sha = check_suite["head_sha"]
-    pull_requests = check_suite["pull_requests"] || []
-
-    Rails.logger.info(
-      "Check suite #{check_suite['id']} completed: " \
-      "conclusion=#{conclusion}, head_sha=#{head_sha}"
+      finished_at: check_suite["updated_at"] ? Time.iso8601(check_suite["updated_at"]) : Time.current
     )
 
-    # Try to find run via associated pull request
-    pull_requests.each do |pr|
-      pr_url = pr["url"]&.gsub(%r{api\.github\.com/repos/}, "")
-        &.gsub(%r{/pulls/}, "/pull/")
-        &.gsub(%r{\.git$}, "")
-
-      next unless pr_url
-
-      # Find run by logs_url (which contains PR URL)
-      run = Run.joins(:work_item)
-        .where("runs.logs_url LIKE ?", "%#{pr_url}%")
-        .first
-
-      next unless run
-
-      outcome = case conclusion
-      when "success"
-        "success"
-      when "failure", "timed_out", "cancelled"
-        "failure"
-      else
-        nil
-      end
-
-      run.update!(
-        outcome: outcome,
-        finished_at: check_suite["updated_at"] ? Time.iso8601(check_suite["updated_at"]) : Time.current
-      )
-
-      return true
-    end
-
-    # If no PR found, log for manual review
-    Rails.logger.debug("Could not link check suite #{check_suite['id']} to any run")
     true
   end
   # rubocop:enable Naming/PredicateMethod

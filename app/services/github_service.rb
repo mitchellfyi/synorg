@@ -82,6 +82,53 @@ class GithubService
     get_request("/repos/#{repo_full_name}/pulls/#{pr_number}/files")
   end
 
+  # Assign an issue to one or more users
+  #
+  # @param issue_number [Integer] Issue number
+  # @param assignees [Array<String>] Array of GitHub usernames
+  # @return [Hash, nil] Issue data or nil on failure
+  def assign_issue(issue_number, assignees)
+    patch_request(
+      "/repos/#{repo_full_name}/issues/#{issue_number}",
+      { assignees: assignees }
+    )
+  end
+
+  # Assign an issue to GitHub Copilot
+  #
+  # @param issue_number [Integer] Issue number
+  # @return [Hash, nil] Issue data or nil on failure
+  def assign_issue_to_copilot(issue_number)
+    copilot_username = get_copilot_username
+    return nil unless copilot_username
+
+    assign_issue(issue_number, [copilot_username])
+  rescue StandardError => e
+    Rails.logger.error("Failed to assign issue #{issue_number} to Copilot: #{e.message}")
+    nil
+  end
+
+  # Get GitHub Copilot username for the repository
+  # Checks if Copilot is available and returns the username
+  #
+  # @return [String, nil] Copilot username or nil if unavailable
+  def get_copilot_username
+    # GitHub Copilot uses the username "github-copilot" or "copilot"
+    # Try to verify by checking repository collaborators or use default
+    # For now, we'll use "github-copilot" as the standard username
+    # In production, you might want to verify this user exists in the repo
+    "github-copilot"
+  end
+
+  # Get branch SHA
+  #
+  # @param branch_name [String] Branch name
+  # @return [String, nil] Branch SHA or nil
+  def get_branch_sha(branch_name)
+    ref_data = get_request("/repos/#{repo_full_name}/git/ref/heads/#{branch_name}")
+    ref_data&.dig("object", "sha")
+  end
+
   private
 
   def get_request(path, params = {})
@@ -95,6 +142,13 @@ class GithubService
   def post_request(path, body)
     uri = URI("#{GITHUB_API_BASE}#{path}")
     request = Net::HTTP::Post.new(uri)
+    request.body = body.to_json
+    execute_request(uri, request)
+  end
+
+  def patch_request(path, body)
+    uri = URI("#{GITHUB_API_BASE}#{path}")
+    request = Net::HTTP::Patch.new(uri)
     request.body = body.to_json
     execute_request(uri, request)
   end

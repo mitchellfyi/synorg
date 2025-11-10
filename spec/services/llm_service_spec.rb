@@ -235,13 +235,17 @@ RSpec.describe LlmService do
   describe "private methods" do
     describe "#build_system_message" do
       it "returns nil for empty context" do
-        messages = service.send(:build_messages, "test", {}, nil)
-        expect(messages.none? { |m| m[:role] == "system" }).to be(true)
+        messages = service.send(:build_messages, "test", {}, nil, nil)
+        # build_system_message always returns a string (default system message),
+        # so we check that it includes the default message
+        system_msg = messages.find { |m| m[:role] == "system" }
+        expect(system_msg).to be_present
+        expect(system_msg[:content]).to include("helpful AI assistant")
       end
 
       it "includes project information in system message" do
         context = { project: { name: "Test", repo_full_name: "test/repo" } }
-        messages = service.send(:build_messages, "test", context, nil)
+        messages = service.send(:build_messages, "test", context, nil, nil)
         system_msg = messages.find { |m| m[:role] == "system" }
 
         expect(system_msg[:content]).to include("Test")

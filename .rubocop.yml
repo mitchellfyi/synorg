@@ -3,6 +3,12 @@ inherit_gem:
   rubocop-github:
     - config/default.yml
 
+plugins:
+  - rubocop-rails
+  - rubocop-factory_bot
+  - rubocop-rspec
+  - rubocop-rspec_rails
+
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.4
@@ -18,5 +24,30 @@ AllCops:
     - 'log/**/*'
     - 'public/**/*'
     - 'storage/**/*'
+
+# Disable I18n locale texts cop - not using i18n yet
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+# Allow multiple expectations in request specs (they test full workflows)
+RSpec/MultipleExpectations:
+  Exclude:
+    - 'spec/requests/**/*'
+    - 'spec/integration/**/*'
+
+# Allow longer examples in request/integration specs
+RSpec/ExampleLength:
+  Exclude:
+    - 'spec/requests/**/*'
+    - 'spec/integration/**/*'
+
+# Allow multiple memoized helpers in specs
+RSpec/MultipleMemoizedHelpers:
+  Exclude:
+    - 'spec/**/*'
+
+# Allow create_list with more than 10 items in tests
+FactoryBot/ExcessiveCreateList:
+  Enabled: false
 # Overrides can go here if needed
 

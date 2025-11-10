@@ -7,7 +7,7 @@ echo "Running RuboCop..."
 bin/rubocop
 
 echo "Running ERB Lint..."
-bundle exec erblint --lint-all
+bundle exec erb_lint --lint-all
 
 echo "Running ESLint..."
 yarn lint:js

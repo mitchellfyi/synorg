@@ -39,7 +39,7 @@
               </tr>
             </thead>
             <tbody id="runs_<%= @project.id %>" class="bg-white divide-y divide-gray-200">
-              <%= render partial: "runs/run_row", collection: @runs %>
+              <%= render partial: "runs/run_row", collection: @runs, as: :run %>
             </tbody>
           </table>
         </div>

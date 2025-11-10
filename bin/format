@@ -7,7 +7,7 @@ echo "Running RuboCop auto-correct..."
 bin/rubocop -A
 
 echo "Running ERB Lint auto-correct..."
-bundle exec erblint --lint-all --autocorrect
+bundle exec erb_lint --lint-all --autocorrect
 
 echo "Running Prettier..."
 yarn format:fix

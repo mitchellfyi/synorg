@@ -28,14 +28,15 @@ RSpec.describe WebhookEventProcessor do
 
         work_item = project.work_items.last
         expect(work_item.work_type).to eq("issue")
-        expect(work_item.payload["issue_number"]).to eq(123)
+        expect(work_item.payload["github_issue_number"]).to eq(123)
+        expect(work_item.payload["github_issue_url"]).to eq("https://github.com/test/repo/issues/123")
         expect(work_item.payload["title"]).to eq("Test Issue")
         expect(work_item.payload["labels"]).to eq(["bug"])
         expect(work_item.status).to eq("pending")
       end
 
       it "updates existing work item on labeled action" do
-        create(:work_item, project: project, work_type: "issue", payload: { issue_number: 123 })
+        create(:work_item, project: project, work_type: "issue", payload: { github_issue_number: 123 })
 
         payload["action"] = "labeled"
         processor = described_class.new(project, "issues", payload)
@@ -47,7 +48,7 @@ RSpec.describe WebhookEventProcessor do
       end
 
       it "marks work item completed on closed action" do
-        work_item = create(:work_item, project: project, work_type: "issue", payload: { issue_number: 123 }, status: "pending")
+        work_item = create(:work_item, project: project, work_type: "issue", payload: { github_issue_number: 123 }, status: "pending")
 
         payload["action"] = "closed"
         payload["issue"]["state"] = "closed"
@@ -62,7 +63,7 @@ RSpec.describe WebhookEventProcessor do
 
     context "with pull_request event" do
       let(:agent) { create(:agent) }
-      let(:work_item) { create(:work_item, project: project, work_type: "issue", payload: { issue_number: 123 }, assigned_agent: agent) }
+      let(:work_item) { create(:work_item, project: project, work_type: "issue", payload: { github_issue_number: 123 }, assigned_agent: agent) }
       let(:payload) do
         {
           "action" => "opened",
@@ -72,7 +73,10 @@ RSpec.describe WebhookEventProcessor do
             "body" => "Fixes #123",
             "state" => "open",
             "merged" => false,
-            "html_url" => "https://github.com/test/repo/pull/45"
+            "html_url" => "https://github.com/test/repo/pull/45",
+            "head" => {
+              "sha" => "abc123def456"
+            }
           }
         }
       end
@@ -87,10 +91,12 @@ RSpec.describe WebhookEventProcessor do
         run = work_item.runs.last
         expect(run.agent).to eq(agent)
         expect(run.logs_url).to eq("https://github.com/test/repo/pull/45")
+        expect(run.github_pr_number).to eq(45)
+        expect(run.github_pr_head_sha).to eq("abc123def456")
       end
 
       it "updates run outcome on merged pull request" do
-        run = create(:run, agent: agent, work_item: work_item)
+        run = create(:run, agent: agent, work_item: work_item, github_pr_number: 45)
 
         payload["action"] = "closed"
         payload["pull_request"]["merged"] = true
@@ -107,7 +113,7 @@ RSpec.describe WebhookEventProcessor do
       end
 
       it "updates run outcome on closed without merge" do
-        run = create(:run, agent: agent, work_item: work_item)
+        run = create(:run, agent: agent, work_item: work_item, github_pr_number: 45)
 
         payload["action"] = "closed"
         payload["pull_request"]["merged"] = false
@@ -142,7 +148,7 @@ RSpec.describe WebhookEventProcessor do
     context "with workflow_run event" do
       let(:agent) { create(:agent) }
       let(:work_item) { create(:work_item, project: project, assigned_agent: agent) }
-      let(:run) { create(:run, agent: agent, work_item: work_item, logs_url: "https://github.com/test/repo/actions/runs/123") }
+      let(:run) { create(:run, agent: agent, work_item: work_item, github_pr_number: 45, logs_url: "https://github.com/test/repo/actions/runs/123") }
       let(:payload) do
         {
           "action" => "completed",
@@ -150,7 +156,12 @@ RSpec.describe WebhookEventProcessor do
             "id" => 123,
             "conclusion" => "success",
             "html_url" => "https://github.com/test/repo/actions/runs/123",
-            "updated_at" => Time.current.iso8601
+            "updated_at" => Time.current.iso8601,
+            "pull_requests" => [
+              {
+                "number" => 45
+              }
+            ]
           }
         }
       end
@@ -169,21 +180,36 @@ RSpec.describe WebhookEventProcessor do
     end
 
     context "with check_suite event" do
+      let(:agent) { create(:agent) }
+      let(:work_item) { create(:work_item, project: project, assigned_agent: agent) }
+      let(:run) { create(:run, agent: agent, work_item: work_item, github_pr_number: 45, github_pr_head_sha: "abc123") }
       let(:payload) do
         {
           "action" => "completed",
           "check_suite" => {
             "id" => 456,
             "conclusion" => "success",
-            "head_sha" => "abc123"
+            "head_sha" => "abc123",
+            "pull_requests" => [
+              {
+                "number" => 45
+              }
+            ],
+            "updated_at" => Time.current.iso8601
           }
         }
       end
+
+      before { run }
 
       it "processes check suite event successfully" do
         processor = described_class.new(project, "check_suite", payload)
 
         expect(processor.process).to be true
+
+        run.reload
+        expect(run.github_check_suite_id).to eq(456)
+        expect(run.outcome).to eq("success")
       end
     end
 

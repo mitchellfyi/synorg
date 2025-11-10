@@ -45,4 +45,32 @@ RSpec.describe GithubService do
       expect(service).to respond_to(:list_pull_request_files)
     end
   end
+
+  describe "#assign_issue" do
+    it "is defined" do
+      expect(service).to respond_to(:assign_issue)
+    end
+  end
+
+  describe "#assign_issue_to_copilot" do
+    it "is defined" do
+      expect(service).to respond_to(:assign_issue_to_copilot)
+    end
+  end
+
+  describe "#get_copilot_username" do
+    it "is defined" do
+      expect(service).to respond_to(:get_copilot_username)
+    end
+
+    it "returns github-copilot" do
+      expect(service.get_copilot_username).to eq("github-copilot")
+    end
+  end
+
+  describe "#get_branch_sha" do
+    it "is defined" do
+      expect(service).to respond_to(:get_branch_sha)
+    end
+  end
 end

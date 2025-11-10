@@ -112,7 +112,7 @@ bin/format
 Individual linters:
 
 - Ruby: `bin/rubocop`
-- ERB: `bundle exec erblint --lint-all`
+- ERB: `bundle exec erb_lint --lint-all`
 - JavaScript: `npm run lint:js`
 - Prettier: `npm run format:check`
 - TypeScript: `npm run typecheck`

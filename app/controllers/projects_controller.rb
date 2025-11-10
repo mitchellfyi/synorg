@@ -20,6 +20,11 @@ class ProjectsController < ApplicationController
                                  .order(created_at: :desc)
                                  .limit(10)
                                  .includes(:assigned_agent, :runs)
+    @recent_runs = Run.joins(:work_item)
+                      .where(work_items: { project_id: @project.id })
+                      .order(started_at: :desc)
+                      .limit(10)
+                      .includes(:agent, :work_item)
     @total_runs_count = Run.joins(:work_item)
                            .where(work_items: { project_id: @project.id })
                            .count
@@ -30,6 +35,8 @@ class ProjectsController < ApplicationController
     @project = Project.new
   end
 
+  def edit
+  end
   def create
     @project = Project.new(project_params)
     @project.state = "draft"
@@ -45,17 +52,11 @@ class ProjectsController < ApplicationController
     end
   end
 
-  def edit
-  end
 
   def update
-    # Don't update PAT or webhook_secret if they're blank (user wants to keep existing values)
-    update_params = project_params.dup
-    update_params.delete(:github_pat) if update_params[:github_pat].blank?
-    update_params.delete(:webhook_secret) if update_params[:webhook_secret].blank?
-
+    # Update all fields including PAT and webhook_secret
     respond_to do |format|
-      if @project.update(update_params)
+      if @project.update(project_params)
         format.html { redirect_to @project, notice: "Project was successfully updated." }
         format.turbo_stream { redirect_to @project, notice: "Project was successfully updated." }
       else
@@ -72,7 +73,7 @@ class ProjectsController < ApplicationController
     end
 
     # Find orchestrator agent
-    orchestrator_agent = Agent.find_by_cached("orchestrator")
+    orchestrator_agent = Agent.find_by(key: "orchestrator")
     unless orchestrator_agent&.enabled?
       redirect_to @project, alert: "Orchestrator agent not found or disabled."
       return
@@ -149,6 +150,6 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :slug, :brief, :repo_full_name, :github_pat, :webhook_secret)
+    params.expect(project: [:name, :slug, :brief, :repo_full_name, :github_pat, :webhook_secret])
   end
 end
