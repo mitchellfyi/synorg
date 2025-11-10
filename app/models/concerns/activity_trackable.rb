@@ -5,8 +5,6 @@
 module ActivityTrackable
   extend ActiveSupport::Concern
 
-  private
-
   # Create an activity record for this model
   #
   # @param key [Symbol, String] Activity key (will be looked up in Activity::KEYS)
@@ -27,6 +25,8 @@ module ActivityTrackable
       created_at: Time.current
     )
   end
+
+  private
 
   # Override in including classes to customize activity owner
   def activity_owner
