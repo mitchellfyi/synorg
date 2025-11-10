@@ -1,7 +1,5 @@
 # Product Manager Agent
 
-For synorg's overall mission and how this agent fits into the orchestration flow, see [MISSION.md](../../MISSION.md).
-
 ## Purpose
 
 The Product Manager agent interprets the project brief and GTM output to draft an initial project scope with actionable tasks.

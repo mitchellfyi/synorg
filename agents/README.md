@@ -2,8 +2,6 @@
 
 This directory contains prompt files for the AI agents used in Synorg.
 
-For synorg's overall mission, architecture, and how these agents fit into the orchestration flow, see [MISSION.md](../MISSION.md).
-
 ## Structure
 
 Each agent has its own subdirectory containing:

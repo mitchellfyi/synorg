@@ -1,7 +1,5 @@
 # GTM (Go-To-Market) Agent
 
-For synorg's overall mission and how this agent fits into the orchestration flow, see [MISSION.md](../../MISSION.md).
-
 ## Purpose
 
 The GTM agent analyzes project briefs and proposes product positioning, naming, and initial marketing strategy.
