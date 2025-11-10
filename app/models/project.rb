@@ -2,8 +2,8 @@
 
 class Project < ApplicationRecord
   include AASM
-
   include PublicActivity::Model
+  include ActivityTrackable
 
   # Disable automatic tracking - we handle activities manually for better control
   # tracked owner: ->(controller, model) { controller&.current_user },
@@ -26,9 +26,9 @@ class Project < ApplicationRecord
   after_destroy_commit -> { broadcast_remove_to "projects" }
 
   # Track project lifecycle manually (not using PublicActivity automatic tracking)
-  after_create_commit -> { create_project_activity(:project_created) }
-  after_update_commit -> { create_project_activity(:project_updated) }
-  after_destroy_commit -> { create_project_activity(:project_destroyed) }
+  after_create_commit -> { create_activity(:project_created) }
+  after_update_commit -> { create_activity(:project_updated) }
+  after_destroy_commit -> { create_activity(:project_destroyed) }
 
   aasm column: :state do
     state :draft, initial: true
@@ -39,54 +39,22 @@ class Project < ApplicationRecord
 
     event :scope do
       transitions from: :draft, to: :scoped
-      after do
-        Activity.create!(
-          trackable: self,
-          key: Activity::KEYS[:project_state_changed],
-          parameters: { from: "draft", to: "scoped" },
-          project: self,
-          created_at: Time.current
-        )
-      end
+      after { create_activity(:project_state_changed, parameters: { from: "draft", to: "scoped" }) }
     end
 
     event :bootstrap_repo do
       transitions from: :scoped, to: :repo_bootstrapped
-      after do
-        Activity.create!(
-          trackable: self,
-          key: Activity::KEYS[:project_state_changed],
-          parameters: { from: "scoped", to: "repo_bootstrapped" },
-          project: self,
-          created_at: Time.current
-        )
-      end
+      after { create_activity(:project_state_changed, parameters: { from: "scoped", to: "repo_bootstrapped" }) }
     end
 
     event :start_build do
       transitions from: :repo_bootstrapped, to: :in_build
-      after do
-        Activity.create!(
-          trackable: self,
-          key: Activity::KEYS[:project_state_changed],
-          parameters: { from: "repo_bootstrapped", to: "in_build" },
-          project: self,
-          created_at: Time.current
-        )
-      end
+      after { create_activity(:project_state_changed, parameters: { from: "repo_bootstrapped", to: "in_build" }) }
     end
 
     event :go_live do
       transitions from: :in_build, to: :live
-      after do
-        Activity.create!(
-          trackable: self,
-          key: Activity::KEYS[:project_state_changed],
-          parameters: { from: "in_build", to: "live" },
-          project: self,
-          created_at: Time.current
-        )
-      end
+      after { create_activity(:project_state_changed, parameters: { from: "in_build", to: "live" }) }
     end
 
     event :revert_to_build do
@@ -106,15 +74,12 @@ class Project < ApplicationRecord
 
   private
 
-  def create_project_activity(key, parameters: {})
-    Activity.create!(
-      trackable: self,
-      owner: nil, # Projects don't have owners in our system
-      recipient: self,
-      key: Activity::KEYS[key] || key.to_s,
-      parameters: parameters,
-      project: self,
-      created_at: Time.current
-    )
+  # Projects don't have owners in our system
+  def activity_owner
+    nil
+  end
+
+  def activity_recipient
+    self
   end
 end

@@ -4,6 +4,7 @@ require "uri"
 
 class Run < ApplicationRecord
   include PublicActivity::Model
+  include ActivityTrackable
 
   # Disable automatic tracking - we handle activities manually for better control
   # tracked owner: ->(controller, model) { model.agent },
@@ -63,21 +64,21 @@ class Run < ApplicationRecord
     false
   end
 
-  def create_activity(key, parameters: {})
-    Activity.create!(
-      trackable: self,
-      owner: agent,
-      recipient: work_item,
-      key: Activity::KEYS[key] || key.to_s,
-      parameters: parameters.merge(
-        agent_name: agent.name,
-        agent_key: agent.key,
-        work_item_id: work_item.id,
-        work_type: work_item.work_type,
-        outcome: outcome
-      ),
-      project: work_item.project,
-      created_at: Time.current
-    )
+  def activity_owner
+    agent
+  end
+
+  def activity_recipient
+    work_item
+  end
+
+  def activity_parameters
+    {
+      agent_name: agent.name,
+      agent_key: agent.key,
+      work_item_id: work_item.id,
+      work_type: work_item.work_type,
+      outcome: outcome
+    }
   end
 end

@@ -2,6 +2,7 @@
 
 class WorkItem < ApplicationRecord
   include PublicActivity::Model
+  include ActivityTrackable
 
   # Disable automatic tracking - we handle activities manually for better control
   # tracked owner: ->(controller, model) { model.assigned_agent },
@@ -58,19 +59,15 @@ class WorkItem < ApplicationRecord
 
   private
 
-  def create_activity(key, parameters: {})
-    Activity.create!(
-      trackable: self,
-      owner: assigned_agent,
-      recipient: project,
-      key: Activity::KEYS[key] || key.to_s,
-      parameters: parameters.merge(
-        work_type: work_type,
-        status: status,
-        priority: priority
-      ),
-      project: project,
-      created_at: Time.current
-    )
+  def activity_owner
+    assigned_agent
+  end
+
+  def activity_parameters
+    {
+      work_type: work_type,
+      status: status,
+      priority: priority
+    }
   end
 end

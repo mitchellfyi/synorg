@@ -67,79 +67,13 @@ class ProjectsController < ApplicationController
   end
 
   def trigger_orchestrator
-    if @project.orchestrator_running?
-      redirect_to @project, alert: "Orchestrator is already running for this project."
-      return
-    end
+    service = OrchestratorTriggerService.new(@project)
+    result = service.call
 
-    # Find orchestrator agent
-    orchestrator_agent = Agent.find_by(key: "orchestrator")
-    unless orchestrator_agent&.enabled?
-      redirect_to @project, alert: "Orchestrator agent not found or disabled."
-      return
-    end
-
-    # Track orchestrator trigger activity
-    Activity.create!(
-      trackable: @project,
-      owner: orchestrator_agent,
-      recipient: @project,
-      key: Activity::KEYS[:orchestrator_triggered],
-      parameters: {
-        agent_name: orchestrator_agent.name,
-        agent_key: orchestrator_agent.key
-      },
-      project: @project,
-      created_at: Time.current
-    )
-
-    # Create work item for orchestrator
-    work_item = @project.work_items.create!(
-      work_type: "orchestrator",
-      status: "pending",
-      priority: 10,
-      payload: {
-        "title" => "Run Orchestrator",
-        "description" => "Orchestrator agent execution triggered manually"
-      }
-    )
-
-    # Run orchestrator via AgentRunner (this will create a Run record)
-    runner = AgentRunner.new(agent: orchestrator_agent, project: @project, work_item: work_item)
-    result = runner.run
-
-    # Track orchestrator completion activity
     if result[:success]
-      work_items_created = result[:work_items_created] || 0
-      Activity.create!(
-        trackable: @project,
-        owner: orchestrator_agent,
-        recipient: @project,
-        key: Activity::KEYS[:orchestrator_completed],
-        parameters: {
-          agent_name: orchestrator_agent.name,
-          agent_key: orchestrator_agent.key,
-          work_items_created: work_items_created
-        },
-        project: @project,
-        created_at: Time.current
-      )
-      redirect_to @project, notice: "Orchestrator triggered successfully. #{work_items_created} work items created."
+      redirect_to @project, notice: result[:message]
     else
-      Activity.create!(
-        trackable: @project,
-        owner: orchestrator_agent,
-        recipient: @project,
-        key: Activity::KEYS[:orchestrator_failed],
-        parameters: {
-          agent_name: orchestrator_agent.name,
-          agent_key: orchestrator_agent.key,
-          error: result[:error]
-        },
-        project: @project,
-        created_at: Time.current
-      )
-      redirect_to @project, alert: "Failed to trigger orchestrator: #{result[:error]}"
+      redirect_to @project, alert: result[:message]
     end
   end
 
