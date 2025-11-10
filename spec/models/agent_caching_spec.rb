@@ -11,17 +11,17 @@ RSpec.describe Agent, ".find_by_cached" do
   end
 
   it "caches agent lookups" do
-      # TODO: Fix - file keeps reverting to find_by(cached:) instead of find_by_cached
+    # TODO: Fix - file keeps reverting to find_by(cached:) instead of find_by_cached
     skip "TODO: Fix test - file keeps reverting to incorrect method call"
-      # Clear cache first
+    # Clear cache first
     Rails.cache.delete("agent:test-agent")
 
-      # First call should hit database
+    # First call should hit database
     expect(described_class).to receive(:find_by).with(key: "test-agent").and_call_original.once
     result1 = described_class.find_by(cached: "test-agent")
     expect(result1).to eq(agent)
 
-      # Second call should use cache (no additional find_by call)
+    # Second call should use cache (no additional find_by call)
     result2 = described_class.find_by(cached: "test-agent")
     expect(result2).to eq(agent)
   end
@@ -46,8 +46,8 @@ RSpec.describe Agent, ".find_by_cached" do
 
   it "invalidates cache on destroy" do
     # TODO: Fix - file keeps reverting to find_by(cached:) instead of find_by_cached
-    # Cache the agent
     skip "TODO: Fix test - file keeps reverting to incorrect method call"
+    # Cache the agent
     described_class.find_by(cached: "test-agent")
 
     # Destroy should clear cache

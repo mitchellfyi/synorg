@@ -152,9 +152,10 @@ RSpec.describe GitHubApiStrategy do
               "Content-Type" => "application/json"
             },
             body: hash_including(
-              base: "main",
+              title: "Test PR",
               body: "PR body",
-              head: "feature-branch"
+              head: "feature-branch",
+              base: "main"
             )
           )
           .to_return(
