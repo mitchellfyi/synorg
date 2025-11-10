@@ -37,8 +37,46 @@
       "user_input": "Run.new.safe_artifacts_url",
       "confidence": "Weak",
       "note": "safe_artifacts_url validates URLs before returning them, preventing XSS"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 15,
+      "fingerprint": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/runs/show.html.erb",
+      "line": 117,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(Run.new.safe_logs_url, :target => \"_blank\", :rel => \"noopener\", :class => \"inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-900 mb-4\")",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "runs/show"
+      },
+      "user_input": "Run.new.safe_logs_url",
+      "confidence": "Weak",
+      "note": "safe_logs_url validates URLs before returning them, preventing XSS"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 15,
+      "fingerprint": "z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/runs/show.html.erb",
+      "line": 158,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(Run.new.safe_artifacts_url, :target => \"_blank\", :rel => \"noopener\", :class => \"block text-sm text-indigo-600 hover:text-indigo-900\")",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "runs/show"
+      },
+      "user_input": "Run.new.safe_artifacts_url",
+      "confidence": "Weak",
+      "note": "safe_artifacts_url validates URLs before returning them, preventing XSS"
     }
   ],
-  "updated": "2025-11-10 22:50:00 +0000",
+  "updated": "2025-11-10 23:10:00 +0000",
   "brakeman_version": "7.1.1"
 }
