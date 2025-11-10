@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ProjectsController < ApplicationController
-  before_action :set_project, only: [:show]
+  before_action :set_project, only: [:show, :edit, :update]
 
   def index
     @projects = Project.left_joins(:work_items)
@@ -37,6 +37,17 @@ class ProjectsController < ApplicationController
       redirect_to @project, notice: "Project was successfully created."
     else
       render :new, status: :unprocessable_content
+    end
+  end
+
+  def edit
+  end
+
+  def update
+    if @project.update(project_params)
+      redirect_to @project, notice: "Project was successfully updated."
+    else
+      render :edit, status: :unprocessable_content
     end
   end
 
