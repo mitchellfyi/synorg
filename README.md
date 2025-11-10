@@ -16,8 +16,8 @@ Visit http://localhost:3000
 
 ## Requirements
 
-- Ruby 3.2.3 (see `.ruby-version`)
-- Node.js 20.x (see `.node-version`)
+- Ruby 3.4.2 (see `.ruby-version`)
+- Node.js 24.5.0 (see `.node-version` and `.nvmrc`)
 - PostgreSQL 16+
 - Bundler 2.7+
 
@@ -32,11 +32,14 @@ bin/setup
 ```
 
 This will:
-- Install Ruby dependencies
-- Install JavaScript dependencies
+
+- Install Ruby dependencies (via Bundler)
+- Install JavaScript dependencies (via Yarn)
 - Create and migrate databases
 - Prepare test database
 - Install Git hooks (Lefthook)
+- Run CI checks to verify environment (linting, security scans, asset builds)
+  - Skip with `bin/setup --skip-ci` for faster setup
 
 ### Git Hooks
 
@@ -47,6 +50,7 @@ Git hooks are automatically installed via Lefthook to ensure code quality:
 - **Pre-push**: Runs full test suite and linters before pushing
 
 To bypass hooks in emergencies:
+
 ```bash
 git commit --no-verify
 git push --no-verify
@@ -56,17 +60,26 @@ See `docs/commands.md` for more details on git hooks.
 
 ### Running the App
 
-Start all services (Rails server, Solid Queue worker, asset watchers):
+Start all services (Rails server, Solid Queue worker, asset watchers, auto-formatter):
 
 ```bash
 bin/dev
 ```
 
 Individual processes:
+
 - Rails server: `bin/rails server`
 - Background jobs: `bin/jobs`
 - JavaScript build: `npm run build -- --watch`
 - CSS build: `npm run build:css -- --watch`
+- Auto-formatter: `bin/watch-format` (runs automatically with `bin/dev`)
+
+**Auto-formatting on file changes**: When running `bin/dev`, files are automatically formatted and linted when you save them:
+
+- **Ruby files** (`.rb`) → RuboCop auto-corrects formatting issues, then runs linting checks
+- **ERB templates** (`.erb`) → erb_lint auto-corrects formatting issues, then runs linting checks
+- **JavaScript/TypeScript** (`.js`, `.ts`) → Prettier formatting + ESLint auto-fix
+- **TypeScript files** (`.ts`) → Type checking (runs on any `.ts` file change)
 
 ### Testing
 
@@ -97,6 +110,7 @@ bin/format
 ```
 
 Individual linters:
+
 - Ruby: `bin/rubocop`
 - ERB: `bundle exec erblint --lint-all`
 - JavaScript: `npm run lint:js`
@@ -115,6 +129,7 @@ bin/bundler-audit     # Check for vulnerable gems
 ## Technology Stack
 
 ### Backend
+
 - **Framework**: Ruby on Rails 8.1.1
 - **Language**: Ruby 3.2.3
 - **Database**: PostgreSQL
@@ -122,11 +137,13 @@ bin/bundler-audit     # Check for vulnerable gems
 - **Testing**: RSpec
 
 ### Frontend
+
 - **CSS**: Tailwind CSS v4
 - **JavaScript**: TypeScript with esbuild
 - **Framework**: Hotwire (Turbo & Stimulus)
 
 ### Development Tools
+
 - **Ruby Linting**: RuboCop (GitHub preset)
 - **ERB Linting**: erb_lint
 - **JS Linting**: ESLint (flat config)
@@ -136,6 +153,7 @@ bin/bundler-audit     # Check for vulnerable gems
 ## CI/CD
 
 GitHub Actions runs on every non-draft PR:
+
 - Ruby linting (RuboCop, erb_lint)
 - JavaScript linting (ESLint, Prettier)
 - TypeScript type checking
@@ -192,4 +210,3 @@ spec/                 # RSpec tests
 ## License
 
 All rights reserved.
-

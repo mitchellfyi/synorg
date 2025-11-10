@@ -91,4 +91,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded rails-app-setup agent"
-

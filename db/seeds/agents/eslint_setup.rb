@@ -135,4 +135,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded eslint-setup agent"
-

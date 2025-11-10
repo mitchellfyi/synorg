@@ -171,7 +171,7 @@ AgentSeeder.seed_agent(
     ```yaml
     - name: Run Playwright tests
       run: npx playwright test
-      
+    #{'  '}
     - name: Upload Playwright report
       uses: actions/upload-artifact@v4
       if: always()
@@ -348,11 +348,11 @@ AgentSeeder.seed_agent(
     SimpleCov.start 'rails' do
       minimum_coverage 80
       minimum_coverage_by_file 60
-      
+    #{'  '}
       add_filter '/spec/'
       add_filter '/config/'
       add_filter '/vendor/'
-      
+    #{'  '}
       add_group 'Models', 'app/models'
       add_group 'Controllers', 'app/controllers'
       add_group 'Services', 'app/services'
@@ -367,7 +367,7 @@ AgentSeeder.seed_agent(
     ```yaml
     - name: Run tests with coverage
       run: COVERAGE=true bin/test
-      
+    #{'  '}
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:

@@ -3,7 +3,7 @@
 module ActivitiesHelper
   def activity_description(activity)
     params = activity.parameters || {}
-    
+
     case activity.key
     when "project.create"
       "Project created: #{activity.trackable.respond_to?(:name) ? activity.trackable.name : activity.trackable.slug}"
@@ -20,8 +20,8 @@ module ActivitiesHelper
     when "llm.request"
       "LLM request (#{params['model'] || params[:model] || 'unknown'})"
     when "llm.response"
-      usage = params['usage'] || params[:usage] || {}
-      tokens = usage['total_tokens'] || usage[:total_tokens] || 0
+      usage = params["usage"] || params[:usage] || {}
+      tokens = usage["total_tokens"] || usage[:total_tokens] || 0
       "LLM response (#{params['model'] || params[:model] || 'unknown'}, #{tokens} tokens)"
     when "llm.error"
       "LLM error: #{params['error'] || params[:error]}"
@@ -36,7 +36,7 @@ module ActivitiesHelper
     when "run.started"
       "Run started: #{params['agent_name'] || params[:agent_name] || params['agent_key'] || params[:agent_key] || 'unknown agent'}"
     when "run.completed"
-      duration = params['duration'] || params[:duration]
+      duration = params["duration"] || params[:duration]
       duration_str = duration ? "#{duration}s" : "unknown duration"
       "Run completed: #{params['agent_name'] || params[:agent_name] || params['agent_key'] || params[:agent_key] || 'unknown agent'} (#{duration_str})"
     when "run.failed"
@@ -82,4 +82,3 @@ module ActivitiesHelper
     end
   end
 end
-

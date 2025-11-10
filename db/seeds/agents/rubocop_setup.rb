@@ -115,4 +115,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded rubocop-setup agent"
-

@@ -117,4 +117,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded ci-workflow-setup agent"
-

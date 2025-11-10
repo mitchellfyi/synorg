@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 source "https://rubygems.org"
 
+ruby "3.4.2"
+
 # Use latest stable Rails version
 gem "rails", "~> 8.1.1"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]

@@ -2,6 +2,7 @@
 
 class WorkItem < ApplicationRecord
   include PublicActivity::Model
+
   # Disable automatic tracking - we handle activities manually for better control
   # tracked owner: ->(controller, model) { model.assigned_agent },
   #         recipient: ->(controller, model) { model.project },
@@ -47,11 +48,11 @@ class WorkItem < ApplicationRecord
   after_destroy_commit -> { broadcast_remove_to "project_#{project_id}_work_items" }
 
   # Also broadcast to project show page (both open and recent work items)
-  after_create_commit -> { 
+  after_create_commit -> {
     broadcast_prepend_to "project_#{project_id}", target: "work_items_#{project_id}", partial: "work_items/work_item", locals: { work_item: self }
     broadcast_prepend_to "project_#{project_id}", target: "recent_work_items_#{project_id}", partial: "work_items/work_item", locals: { work_item: self }
   }
-  after_update_commit -> { 
+  after_update_commit -> {
     broadcast_replace_to "project_#{project_id}", partial: "work_items/work_item", locals: { work_item: self }
   }
 

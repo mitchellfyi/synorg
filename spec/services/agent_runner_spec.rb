@@ -206,4 +206,3 @@ RSpec.describe AgentRunner do
     end
   end
 end
-

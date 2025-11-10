@@ -2,4 +2,5 @@ web: env RUBY_DEBUG_OPEN=true bin/rails server
 worker: bin/jobs
 js: yarn build --watch
 css: yarn build:css --watch
+format: bin/watch-format
 ngrok: bin/ngrok

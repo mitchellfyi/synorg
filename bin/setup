@@ -58,6 +58,33 @@ FileUtils.chdir APP_ROOT do
   puts "\n== Installing Git hooks =="
   system! "bundle exec lefthook install"
 
+  # Run CI checks to ensure dev environment is passing
+  # Skip with --skip-ci flag for faster setup
+  unless ARGV.include?("--skip-ci")
+    puts "\n== Running CI checks to verify environment =="
+    
+    puts "\n  → JavaScript/TypeScript linting..."
+    system!("yarn lint:js")
+    system!("yarn format:check")
+    system!("yarn typecheck")
+    
+    puts "\n  → Building assets..."
+    system!("yarn build")
+    system!("yarn build:css")
+    
+    puts "\n  → Ruby linting..."
+    system!("bin/rubocop -f github")
+    system!("bundle exec erblint --lint-all")
+    
+    puts "\n  → Security scans..."
+    system!("bin/brakeman --no-pager")
+    system!("bin/bundler-audit")
+    
+    puts "\n✓ All CI checks passed! Dev environment is ready."
+  else
+    puts "\n⚠ Skipping CI checks (use without --skip-ci to verify environment)"
+  end
+
   unless ARGV.include?("--skip-server")
     puts "\n== Starting development server =="
     STDOUT.flush # flush the output before exec(2) so that it displays

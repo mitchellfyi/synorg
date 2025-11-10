@@ -120,4 +120,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded frontend-setup agent"
-

@@ -7,4 +7,3 @@
 # Customize PublicActivity to use JSONB for parameters
 # PublicActivity by default uses YAML, but we're using JSONB
 # We handle serialization in the Activity model by overriding the parameters method
-

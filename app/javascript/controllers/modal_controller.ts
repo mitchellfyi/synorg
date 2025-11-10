@@ -3,20 +3,23 @@ import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
   static values = {
-    content: String
-  }
+    content: String,
+  };
 
-  open(event) {
+  declare contentValue: string;
+
+  open(event: Event) {
     event.preventDefault();
-    let content = this.contentValue || event.currentTarget.dataset.modalContentValue;
-    
+    const target = event.currentTarget as HTMLElement;
+    let content = this.contentValue || target.dataset.modalContentValue || '';
+
     // Content is already a string, use as-is
     const modal = this.createModal(content);
     document.body.appendChild(modal);
     modal.showModal();
   }
 
-  createModal(content) {
+  createModal(content: string) {
     const dialog = document.createElement('dialog');
     dialog.className = 'fixed inset-0 z-50 overflow-y-auto';
     dialog.innerHTML = `
@@ -40,9 +43,13 @@ export default class extends Controller {
       </div>
     `;
 
-    const closeButton = dialog.querySelector('button[data-action="click->modal#close"]');
-    closeButton.addEventListener('click', () => this.close(dialog));
-    dialog.addEventListener('click', (e) => {
+    const closeButton = dialog.querySelector<HTMLButtonElement>(
+      'button[data-action="click->modal#close"]'
+    );
+    if (closeButton) {
+      closeButton.addEventListener('click', () => this.close(dialog));
+    }
+    dialog.addEventListener('click', (e: MouseEvent) => {
       if (e.target === dialog) {
         this.close(dialog);
       }
@@ -51,15 +58,14 @@ export default class extends Controller {
     return dialog;
   }
 
-  close(dialog) {
+  close(dialog: HTMLDialogElement) {
     dialog.close();
     dialog.remove();
   }
 
-  escapeHtml(text) {
+  escapeHtml(text: string) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 }
-

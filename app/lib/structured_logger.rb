@@ -142,11 +142,29 @@ module StructuredLogger
     # Format based on environment
     if Rails.env.production? || ENV["STRUCTURED_LOGS"] == "true"
       # JSON format for production/log aggregation
-      Rails.logger.send(level, log_entry.to_json)
+      case level
+      when :debug
+        Rails.logger.debug(log_entry.to_json)
+      when :info
+        Rails.logger.info(log_entry.to_json)
+      when :warn
+        Rails.logger.warn(log_entry.to_json)
+      when :error
+        Rails.logger.error(log_entry.to_json)
+      end
     else
       # Human-readable format for development
       formatted = format_human_readable(log_entry)
-      Rails.logger.send(level, formatted)
+      case level
+      when :debug
+        Rails.logger.debug(formatted)
+      when :info
+        Rails.logger.info(formatted)
+      when :warn
+        Rails.logger.warn(formatted)
+      when :error
+        Rails.logger.error(formatted)
+      end
     end
   end
 
@@ -173,4 +191,3 @@ module StructuredLogger
     parts.join(" ")
   end
 end
-

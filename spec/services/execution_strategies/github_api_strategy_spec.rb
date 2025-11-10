@@ -90,4 +90,3 @@ RSpec.describe GitHubApiStrategy do
     end
   end
 end
-

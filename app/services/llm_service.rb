@@ -294,20 +294,20 @@ class LlmService
 
     # Parse structured output if schema provided
     parsed_content = if structured_output && content
-                        begin
-                          # Content is already JSON when using structured outputs
-                          JSON.parse(content).deep_symbolize_keys
-                        rescue JSON::ParserError => e
-                          StructuredLogger.error(
-                            "Failed to parse structured output",
-                            error: e.message,
-                            content_preview: content&.truncate(500)
-                          )
-                          nil
-                        end
-                      else
-                        content
-                      end
+                       begin
+                         # Content is already JSON when using structured outputs
+                         JSON.parse(content).deep_symbolize_keys
+                       rescue JSON::ParserError => e
+                         StructuredLogger.error(
+                           "Failed to parse structured output",
+                           error: e.message,
+                           content_preview: content&.truncate(500)
+                         )
+                         nil
+                       end
+                     else
+                       content
+                     end
 
     {
       content: parsed_content,

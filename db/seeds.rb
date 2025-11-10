@@ -26,7 +26,7 @@ project = Project.find_or_create_by!(slug: "synorg-demo") do |p|
     A demonstration project for synorg using the synorg-demo repository.
     This project showcases synorg's capabilities for managing AI agent workflows
     and GitHub integration.
-    
+
     Features to demonstrate:
     - Project lifecycle management
     - Work item creation and tracking

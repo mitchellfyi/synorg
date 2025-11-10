@@ -15,6 +15,7 @@ Determines if the PR is a draft to skip CI for draft PRs.
 ### 2. Ruby Linting (`lint_ruby`)
 
 Checks Ruby and ERB code style:
+
 - RuboCop with GitHub preset
 - ERB Lint for templates
 
@@ -25,6 +26,7 @@ Checks Ruby and ERB code style:
 ### 3. JavaScript/TypeScript Linting (`lint_js`)
 
 Checks JavaScript and TypeScript code:
+
 - ESLint with flat config
 - Prettier formatting
 - TypeScript type checking
@@ -36,6 +38,7 @@ Checks JavaScript and TypeScript code:
 ### 4. Security Scans (`security`)
 
 Scans for security vulnerabilities:
+
 - Brakeman (static analysis for Rails)
 - bundler-audit (checks for vulnerable gems)
 
@@ -46,6 +49,7 @@ Scans for security vulnerabilities:
 ### 5. Tests (`test`)
 
 Runs the RSpec test suite with PostgreSQL:
+
 - Sets up PostgreSQL 16 service
 - Builds JavaScript and CSS assets
 - Runs database migrations
@@ -58,6 +62,7 @@ Runs the RSpec test suite with PostgreSQL:
 ### 6. Playwright Tests (`playwright`)
 
 Runs end-to-end browser tests (optional):
+
 - Installs Playwright browsers
 - Runs tests if they exist
 - Passes gracefully if no tests are present
@@ -73,6 +78,7 @@ Runs end-to-end browser tests (optional):
 The Rails master key is required for CI to decrypt credentials.
 
 **How to set it**:
+
 1. Navigate to: Settings → Secrets and variables → Actions
 2. Click "New repository secret"
 3. Name: `RAILS_MASTER_KEY`
@@ -89,30 +95,35 @@ Location: `.github/workflows/ci.yml`
 You can run the same checks locally before pushing:
 
 ### Ruby Linting
+
 ```bash
 bin/rubocop
 bundle exec erb_lint --lint-all
 ```
 
 ### JavaScript Linting
+
 ```bash
-npm run lint:js
-npm run format:check
-npm run typecheck
+yarn lint:js
+yarn format:check
+yarn typecheck
 ```
 
 ### Security Scans
+
 ```bash
 bin/brakeman --no-pager
 bin/bundler-audit
 ```
 
 ### Tests
+
 ```bash
 bin/test
 ```
 
 ### All Checks
+
 ```bash
 bin/lint  # Runs all linters
 bin/test  # Runs all tests
@@ -128,6 +139,7 @@ bin/test  # Runs all tests
 ### RuboCop failures
 
 Run locally and auto-fix:
+
 ```bash
 bin/rubocop -A
 ```
@@ -135,6 +147,7 @@ bin/rubocop -A
 ### ERB Lint failures
 
 Run locally and auto-fix:
+
 ```bash
 bundle exec erb_lint --lint-all --autocorrect
 ```
@@ -142,32 +155,37 @@ bundle exec erb_lint --lint-all --autocorrect
 ### ESLint failures
 
 Run locally and auto-fix:
+
 ```bash
-npm run lint:js -- --fix
+yarn eslint app/javascript --fix
 ```
 
 ### Prettier failures
 
 Run locally and auto-fix:
+
 ```bash
-npm run format:fix
+yarn format:fix
 ```
 
 ### TypeScript errors
 
 Check types locally:
+
 ```bash
-npm run typecheck
+yarn typecheck
 ```
 
 ### Test failures
 
 Run tests locally:
+
 ```bash
 bin/test
 ```
 
 For specific tests:
+
 ```bash
 bin/test spec/models/user_spec.rb
 ```
@@ -218,7 +236,7 @@ Configure at: Settings → Branches → Add rule
 The CI workflow uses caching to speed up builds:
 
 - **Ruby gems**: Cached via `ruby/setup-ruby` with `bundler-cache: true`
-- **Node modules**: Cached via `actions/setup-node` with `cache: 'npm'`
+- **Node modules**: Cached via `actions/setup-node` with `cache: 'yarn'`
 - **RuboCop cache**: Cached via `actions/cache`
 
 Caches are invalidated when dependencies change.
@@ -226,6 +244,7 @@ Caches are invalidated when dependencies change.
 ## Performance
 
 Typical CI run times:
+
 - Ruby linting: ~30 seconds
 - JavaScript linting: ~20 seconds
 - Security scans: ~40 seconds

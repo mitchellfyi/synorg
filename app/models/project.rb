@@ -2,7 +2,9 @@
 
 class Project < ApplicationRecord
   include AASM
+
   include PublicActivity::Model
+
   # Disable automatic tracking - we handle activities manually for better control
   # tracked owner: ->(controller, model) { controller&.current_user },
   #         recipient: ->(controller, model) { model },

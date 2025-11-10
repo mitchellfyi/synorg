@@ -71,4 +71,3 @@ class Activity < PublicActivity::Activity
   after_create_commit -> { broadcast_prepend_to "project_#{project_id}_activities", target: "activities_#{project_id}", partial: "activities/activity", locals: { activity: self } }
   after_create_commit -> { broadcast_prepend_to "project_#{project_id}", target: "activities_#{project_id}", partial: "activities/activity", locals: { activity: self } }
 end
-

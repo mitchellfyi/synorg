@@ -97,4 +97,3 @@ RSpec.describe DatabaseStrategy do
     end
   end
 end
-

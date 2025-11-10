@@ -135,4 +135,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded git-hooks-setup agent"
-

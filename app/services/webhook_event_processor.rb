@@ -45,6 +45,10 @@ class WebhookEventProcessor
 
   private
 
+  # rubocop:disable Naming/PredicateMethod
+  # These methods perform actions (processing events) and return success/failure status,
+  # they are not predicate methods despite returning booleans.
+
   def process_issue_event
     action = payload["action"]
     issue = payload["issue"]
@@ -288,6 +292,7 @@ class WebhookEventProcessor
     Rails.logger.debug("Could not link check suite #{check_suite['id']} to any run")
     true
   end
+  # rubocop:enable Naming/PredicateMethod
 
   def extract_issue_number_from_pr(pull_request)
     body = pull_request["body"] || ""

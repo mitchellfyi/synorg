@@ -20,4 +20,3 @@ class CreateActivities < ActiveRecord::Migration[8.1]
     add_index :activities, :created_at
   end
 end
-

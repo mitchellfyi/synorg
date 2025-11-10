@@ -81,4 +81,3 @@ RSpec.describe FileWriteStrategy do
     end
   end
 end
-

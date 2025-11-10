@@ -266,4 +266,3 @@ RSpec.describe LlmService do
     end
   end
 end
-

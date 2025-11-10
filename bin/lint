@@ -10,12 +10,12 @@ echo "Running ERB Lint..."
 bundle exec erblint --lint-all
 
 echo "Running ESLint..."
-npm run lint:js
+yarn lint:js
 
 echo "Running Prettier check..."
-npm run format:check
+yarn format:check
 
 echo "Running TypeScript type check..."
-npm run typecheck
+yarn typecheck
 
 echo "All linters passed!"

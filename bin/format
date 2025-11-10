@@ -10,6 +10,6 @@ echo "Running ERB Lint auto-correct..."
 bundle exec erblint --lint-all --autocorrect
 
 echo "Running Prettier..."
-npm run format:fix
+yarn format:fix
 
 echo "All formatters applied!"

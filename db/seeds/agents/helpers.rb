@@ -21,4 +21,3 @@ module AgentSeeder
     agent
   end
 end
-

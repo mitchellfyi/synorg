@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Wrapper for commitlint that provides better error messages
+
+set -e
+
+# Run commitlint and capture output
+if ! OUTPUT=$(npx commitlint --edit "$1" 2>&1); then
+  echo ""
+  echo "❌ Commit message format error!"
+  echo ""
+  echo "Your commit message must follow Conventional Commits format:"
+  echo ""
+  echo "  Format: <type>: <subject>"
+  echo ""
+  echo "  Examples:"
+  echo "    fix: update CI configuration"
+  echo "    feat: add user authentication"
+  echo "    docs: update README"
+  echo "    chore: update dependencies"
+  echo ""
+  echo "  Valid types:"
+  echo "    build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test"
+  echo ""
+  echo "  Common mistakes:"
+  echo "    ❌ 'fix ci'          → Missing colon"
+  echo "    ✅ 'fix: ci'         → Correct format"
+  echo "    ❌ 'Fix: CI'         → Wrong case (should be lowercase)"
+  echo "    ✅ 'fix: update ci'  → Correct format"
+  echo ""
+  echo "Original error:"
+  echo "$OUTPUT"
+  echo ""
+  exit 1
+fi
+

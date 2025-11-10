@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Watch files and auto-format/lint on changes
+
+set -e
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+CHOKIDAR_BIN="$(yarn bin chokidar)"
+
+if [ ! -f "$CHOKIDAR_BIN" ]; then
+  echo "Error: chokidar-cli not found. Run: yarn install"
+  exit 1
+fi
+
+echo -e "${GREEN}Starting file watchers for auto-formatting and linting...${NC}"
+echo -e "${YELLOW}Watching for file changes...${NC}"
+echo ""
+
+# Watch Ruby files - lint and auto-format with RuboCop
+"$CHOKIDAR_BIN" 'app/**/*.rb' 'lib/**/*.rb' 'spec/**/*.rb' 'config/**/*.rb' \
+  -c 'bundle exec rubocop -A {path} && bundle exec rubocop {path}' \
+  --initial \
+  --silent &
+
+# Watch ERB files - lint and auto-format with erb_lint
+"$CHOKIDAR_BIN" 'app/**/*.erb' \
+  -c 'bundle exec erblint --autocorrect {path} && bundle exec erblint {path}' \
+  --initial \
+  --silent &
+
+# Watch JavaScript/TypeScript files - format and lint the changed file
+"$CHOKIDAR_BIN" 'app/javascript/**/*.{js,ts}' \
+  -c 'npx prettier --write {path} && npx eslint --fix {path}' \
+  --initial \
+  --silent &
+
+# Watch TypeScript files - run type checking (checks entire project)
+"$CHOKIDAR_BIN" 'app/javascript/**/*.ts' \
+  -c 'yarn typecheck' \
+  --initial \
+  --silent &
+
+# Wait for all background processes
+wait

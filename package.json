@@ -13,6 +13,7 @@
     "@types/node": "^24.10.0",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
+    "chokidar-cli": "^3.0.0",
     "esbuild": "^0.25.12",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
@@ -27,6 +28,8 @@
     "format:check": "prettier --check 'app/javascript/**/*.{js,ts}'",
     "format:fix": "prettier --write 'app/javascript/**/*.{js,ts}'",
     "typecheck": "tsc --noEmit",
+    "watch:format": "chokidar 'app/javascript/**/*.{js,ts}' -c 'yarn format:fix' --initial",
+    "watch:lint": "chokidar 'app/javascript/**/*.{js,ts}' -c 'yarn lint:js --fix' --initial",
     "hooks:install": "lefthook install",
     "hooks:uninstall": "lefthook uninstall"
   },

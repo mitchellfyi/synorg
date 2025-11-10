@@ -100,4 +100,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded dependabot-setup agent"
-

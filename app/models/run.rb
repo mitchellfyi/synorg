@@ -2,6 +2,7 @@
 
 class Run < ApplicationRecord
   include PublicActivity::Model
+
   # Disable automatic tracking - we handle activities manually for better control
   # tracked owner: ->(controller, model) { model.agent },
   #         recipient: ->(controller, model) { model.work_item },

@@ -59,4 +59,3 @@ RSpec.describe Agent, "caching" do
     end
   end
 end
-

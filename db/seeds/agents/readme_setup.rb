@@ -126,4 +126,3 @@ AgentSeeder.seed_agent(
 )
 
 puts "✓ Seeded readme-setup agent"
-
