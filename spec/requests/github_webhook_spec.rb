@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "GitHub Webhooks", type: :request do
+RSpec.describe "GitHub Webhooks" do
   let!(:project) { create(:project, webhook_secret: "test-secret-123") }
   let(:webhook_secret) { "test-secret-123" }
   let(:delivery_id) { "12345-67890-abcdef" }

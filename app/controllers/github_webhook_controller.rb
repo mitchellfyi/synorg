@@ -59,7 +59,7 @@ class GithubWebhookController < ApplicationController
     head :bad_request
   rescue StandardError => e
     Rails.logger.error("Error processing webhook: #{e.class} - #{e.message}")
-    if Rails.env.development? || Rails.env.test?
+    if Rails.env.local?
       Rails.logger.debug(e.backtrace.join("\n"))
     end
     head :internal_server_error

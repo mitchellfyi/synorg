@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Policy, type: :model do
+RSpec.describe Policy do
   describe "validations" do
     subject { described_class.new(project: Project.create!(slug: "test"), key: "test_key") }
 

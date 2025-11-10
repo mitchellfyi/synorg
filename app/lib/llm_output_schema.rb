@@ -228,10 +228,10 @@ class LlmOutputSchema
     raise ValidationError, "work_items must be a non-empty array" if work_items.empty?
 
     work_items.each_with_index do |wi, index|
-      unless wi[:work_type].present?
+      if wi[:work_type].blank?
         raise ValidationError, "work_items[#{index}]: work_type is required"
       end
-      unless wi[:agent_key].present?
+      if wi[:agent_key].blank?
         raise ValidationError, "work_items[#{index}]: agent_key is required"
       end
       if wi[:priority] && (wi[:priority] < 1 || wi[:priority] > 10)
@@ -245,10 +245,10 @@ class LlmOutputSchema
     raise ValidationError, "files must be a non-empty array" if files.empty?
 
     files.each_with_index do |file, index|
-      unless file[:path].present?
+      if file[:path].blank?
         raise ValidationError, "files[#{index}]: path is required"
       end
-      unless file[:content].present?
+      if file[:content].blank?
         raise ValidationError, "files[#{index}]: content is required"
       end
     end
@@ -259,7 +259,7 @@ class LlmOutputSchema
     raise ValidationError, "operations must be a non-empty array" if operations.empty?
 
     operations.each_with_index do |op, index|
-      unless op[:operation].present?
+      if op[:operation].blank?
         raise ValidationError, "operations[#{index}]: operation is required"
       end
       unless %w[create_issue create_pr create_files_and_pr].include?(op[:operation])
@@ -268,14 +268,14 @@ class LlmOutputSchema
 
       case op[:operation]
       when "create_issue"
-        unless op[:title].present?
+        if op[:title].blank?
           raise ValidationError, "operations[#{index}]: title is required for create_issue"
         end
       when "create_pr"
         unless op[:title].present? || op[:pr_title].present?
           raise ValidationError, "operations[#{index}]: title or pr_title is required for create_pr"
         end
-        unless op[:head].present?
+        if op[:head].blank?
           raise ValidationError, "operations[#{index}]: head is required for create_pr"
         end
       when "create_files_and_pr"
@@ -284,10 +284,10 @@ class LlmOutputSchema
           raise ValidationError, "operations[#{index}]: files array is required for create_files_and_pr"
         end
         files.each_with_index do |file, file_index|
-          unless file[:path].present?
+          if file[:path].blank?
             raise ValidationError, "operations[#{index}].files[#{file_index}]: path is required"
           end
-          unless file[:content].present?
+          if file[:content].blank?
             raise ValidationError, "operations[#{index}].files[#{file_index}]: content is required"
           end
         end

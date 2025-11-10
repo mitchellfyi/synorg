@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require_relative "../../../app/services/execution_strategies/file_write_strategy"
 
 RSpec.describe FileWriteStrategy do
   let(:project) { create(:project) }
@@ -24,9 +25,9 @@ RSpec.describe FileWriteStrategy do
         result = strategy.execute(parsed_response)
 
         expect(result[:success]).to be true
-        expect(File.exist?(Rails.root.join("test.md"))).to be true
-        expect(File.read(Rails.root.join("test.md"))).to eq("# Test")
-        expect(File.exist?(Rails.root.join("docs/guide.md"))).to be true
+        expect(Rails.root.join("test.md").exist?).to be true
+        expect(Rails.root.join("test.md").read).to eq("# Test")
+        expect(Rails.root.join("docs/guide.md").exist?).to be true
 
         # Cleanup
         FileUtils.rm_f(Rails.root.join("test.md"))

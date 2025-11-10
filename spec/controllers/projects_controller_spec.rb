@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe ProjectsController, type: :controller do
+RSpec.describe ProjectsController do
   describe "GET #index" do
     it "assigns all projects to @projects" do
       project1 = create(:project, slug: "project-1")
@@ -10,7 +10,7 @@ RSpec.describe ProjectsController, type: :controller do
 
       get :index
 
-      expect(assigns(:projects)).to match_array([project1, project2])
+      expect(assigns(:projects)).to contain_exactly(project1, project2)
     end
 
     it "orders projects by created_at descending" do
@@ -44,11 +44,11 @@ RSpec.describe ProjectsController, type: :controller do
   describe "GET #show" do
     let(:project) { create(:project) }
     let(:agent) { create(:agent) }
-    let!(:work_item1) { create(:work_item, project: project, status: "pending", priority: 10) }
-    let!(:work_item2) { create(:work_item, project: project, status: "in_progress", priority: 5) }
-    let!(:work_item3) { create(:work_item, project: project, status: "completed") }
-    let!(:run1) { create(:run, work_item: work_item1, agent: agent, started_at: 1.hour.ago) }
-    let!(:run2) { create(:run, work_item: work_item2, agent: agent, started_at: 2.hours.ago) }
+    let!(:pending_work_item) { create(:work_item, project: project, status: "pending", priority: 10) }
+    let!(:in_progress_work_item) { create(:work_item, project: project, status: "in_progress", priority: 5) }
+    let!(:completed_work_item) { create(:work_item, project: project, status: "completed") }
+    let!(:first_run) { create(:run, work_item: pending_work_item, agent: agent, started_at: 1.hour.ago) }
+    let!(:second_run) { create(:run, work_item: in_progress_work_item, agent: agent, started_at: 2.hours.ago) }
 
     before do
       get :show, params: { id: project.id }
@@ -59,25 +59,25 @@ RSpec.describe ProjectsController, type: :controller do
     end
 
     it "assigns open work items (pending and in_progress)" do
-      expect(assigns(:open_work_items)).to match_array([work_item1, work_item2])
+      expect(assigns(:open_work_items)).to contain_exactly(pending_work_item, in_progress_work_item)
     end
 
     it "does not include completed work items in @open_work_items" do
-      expect(assigns(:open_work_items)).not_to include(work_item3)
+      expect(assigns(:open_work_items)).not_to include(completed_work_item)
     end
 
     it "orders open work items by priority descending, then created_at ascending" do
-      expect(assigns(:open_work_items)).to eq([work_item1, work_item2])
+      expect(assigns(:open_work_items)).to eq([pending_work_item, in_progress_work_item])
     end
 
     it "assigns recent runs ordered by started_at descending" do
-      expect(assigns(:recent_runs)).to eq([run1, run2])
+      expect(assigns(:recent_runs)).to eq([first_run, second_run])
     end
 
     it "limits recent runs to 10" do
       # Create more than 10 runs
       11.times do |i|
-        create(:run, work_item: work_item1, agent: agent, started_at: (i + 3).hours.ago)
+        create(:run, work_item: pending_work_item, agent: agent, started_at: (i + 3).hours.ago)
       end
 
       get :show, params: { id: project.id }

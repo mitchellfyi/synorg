@@ -481,4 +481,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded dev-tooling agent"
+Rails.logger.debug "✓ Seeded dev-tooling agent"

@@ -116,4 +116,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded ci-workflow-setup agent"
+Rails.logger.debug "✓ Seeded ci-workflow-setup agent"

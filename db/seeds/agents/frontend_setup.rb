@@ -119,4 +119,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded frontend-setup agent"
+Rails.logger.debug "✓ Seeded frontend-setup agent"

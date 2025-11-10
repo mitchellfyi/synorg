@@ -90,4 +90,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded rails-app-setup agent"
+Rails.logger.debug "✓ Seeded rails-app-setup agent"

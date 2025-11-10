@@ -146,4 +146,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded orchestrator agent"
+Rails.logger.debug "✓ Seeded orchestrator agent"

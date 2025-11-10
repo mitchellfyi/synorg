@@ -93,4 +93,14 @@ group :development do
 
   # Automatic browser refresh on file changes [https://github.com/kirillplatonov/hotwire-livereload]
   gem "hotwire-livereload"
+
+  # RuboCop extensions for better linting
+  gem "rubocop-factory_bot", "~> 2.27", require: false
+  gem "rubocop-rspec", "~> 3.7", require: false
+  gem "rubocop-rspec_rails", "~> 2.31", require: false
+end
+
+group :test do
+  # HTTP request stubbing for tests [https://github.com/bblimke/webmock]
+  gem "webmock", "~> 3.26"
 end

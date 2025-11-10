@@ -23,6 +23,24 @@
         <% end %>
         <span>• Created <%= time_ago_in_words(work_item.created_at) %> ago</span>
       </div>
+      <div class="mt-1 flex items-center gap-2">
+        <% if work_item.payload["github_issue_url"].present? %>
+          <%= link_to work_item.payload["github_issue_url"], target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800" do %>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Issue #<%= work_item.payload["github_issue_number"] %>
+          <% end %>
+        <% end %>
+        <% if work_item.payload["github_pr_url"].present? %>
+          <%= link_to work_item.payload["github_pr_url"], target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800" do %>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            PR #<%= work_item.payload["github_pr_number"] %>
+          <% end %>
+        <% end %>
+      </div>
       <% if work_item.payload.present? && work_item.payload.keys.any? { |k| k != "title" } %>
         <details class="mt-2">
           <summary class="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800">Show details</summary>

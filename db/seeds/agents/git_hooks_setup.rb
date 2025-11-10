@@ -134,4 +134,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded git-hooks-setup agent"
+Rails.logger.debug "✓ Seeded git-hooks-setup agent"

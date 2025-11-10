@@ -2,11 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Run, type: :model do
-  describe "validations" do
-    it { is_expected.to validate_presence_of(:agent) }
-    it { is_expected.to validate_presence_of(:work_item) }
-  end
+RSpec.describe Run do
 
   describe "associations" do
     it { is_expected.to belong_to(:agent) }

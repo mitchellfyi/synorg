@@ -2,17 +2,17 @@
 
 require "rails_helper"
 
-RSpec.describe RunsController, type: :controller do
+RSpec.describe RunsController do
   let(:project) { create(:project) }
   let(:agent) { create(:agent) }
-  let(:work_item1) { create(:work_item, project: project) }
-  let(:work_item2) { create(:work_item, project: project) }
+  let(:first_work_item) { create(:work_item, project: project) }
+  let(:second_work_item) { create(:work_item, project: project) }
   let(:other_project) { create(:project, slug: "other-project") }
   let(:other_work_item) { create(:work_item, project: other_project) }
 
   describe "GET #index" do
-    let!(:run1) { create(:run, work_item: work_item1, agent: agent, started_at: 1.hour.ago) }
-    let!(:run2) { create(:run, work_item: work_item2, agent: agent, started_at: 2.hours.ago) }
+    let!(:first_run) { create(:run, work_item: first_work_item, agent: agent, started_at: 1.hour.ago) }
+    let!(:second_run) { create(:run, work_item: second_work_item, agent: agent, started_at: 2.hours.ago) }
     let!(:other_run) { create(:run, work_item: other_work_item, agent: agent, started_at: 30.minutes.ago) }
 
     before do
@@ -24,7 +24,7 @@ RSpec.describe RunsController, type: :controller do
     end
 
     it "assigns runs for the project to @runs" do
-      expect(assigns(:runs)).to match_array([run1, run2])
+      expect(assigns(:runs)).to contain_exactly(first_run, second_run)
     end
 
     it "does not include runs from other projects" do
@@ -32,13 +32,13 @@ RSpec.describe RunsController, type: :controller do
     end
 
     it "orders runs by started_at descending" do
-      expect(assigns(:runs)).to eq([run1, run2])
+      expect(assigns(:runs)).to eq([first_run, second_run])
     end
 
     it "limits runs to 100" do
       # Create more than 100 runs for the project
       105.times do |i|
-        create(:run, work_item: work_item1, agent: agent, started_at: (i + 3).hours.ago)
+        create(:run, work_item: first_work_item, agent: agent, started_at: (i + 3).hours.ago)
       end
 
       get :index, params: { project_id: project.id }

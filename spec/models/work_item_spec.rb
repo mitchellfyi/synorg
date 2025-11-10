@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe WorkItem, type: :model do
+RSpec.describe WorkItem do
   describe "validations" do
     it { is_expected.to validate_presence_of(:work_type) }
     it { is_expected.to validate_presence_of(:status) }

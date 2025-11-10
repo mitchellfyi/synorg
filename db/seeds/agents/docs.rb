@@ -423,4 +423,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded docs agent"
+Rails.logger.debug "✓ Seeded docs agent"

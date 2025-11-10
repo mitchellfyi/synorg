@@ -106,7 +106,7 @@ RSpec.describe AssignmentService do
       # Both agents should have claimed work items
       expect(claimed_items.compact.size).to eq(2)
       claimed_ids = claimed_items.compact.map(&:id).sort
-      expect(claimed_ids).to match_array([work_item1.id, work_item2.id])
+      expect(claimed_ids).to contain_exactly(work_item1.id, work_item2.id)
     end
 
     it "creates a Run record when leasing" do
@@ -118,7 +118,7 @@ RSpec.describe AssignmentService do
 
       expect {
         described_class.lease_next_work_item(agent)
-      }.to change { Run.count }.by(1)
+      }.to change(Run, :count).by(1)
 
       run = Run.last
       expect(run.agent).to eq(agent)

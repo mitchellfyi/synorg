@@ -151,4 +151,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded gtm agent"
+Rails.logger.debug "✓ Seeded gtm agent"

@@ -3,6 +3,12 @@ inherit_gem:
   rubocop-github:
     - config/default.yml
 
+plugins:
+  - rubocop-rails
+  - rubocop-factory_bot
+  - rubocop-rspec
+  - rubocop-rspec_rails
+
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.4
@@ -18,5 +24,62 @@ AllCops:
     - 'log/**/*'
     - 'public/**/*'
     - 'storage/**/*'
+
+# Disable I18n locale texts cop - not using i18n yet
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+# Allow multiple expectations in request specs (they test full workflows)
+RSpec/MultipleExpectations:
+  Exclude:
+    - 'spec/requests/**/*'
+    - 'spec/integration/**/*'
+    - 'spec/services/**/*'
+    - 'spec/controllers/**/*'
+    - 'spec/models/**/*'
+
+# Allow longer examples in request/integration specs
+RSpec/ExampleLength:
+  Exclude:
+    - 'spec/requests/**/*'
+    - 'spec/integration/**/*'
+    - 'spec/services/**/*'
+    - 'spec/controllers/**/*'
+    - 'spec/models/**/*'
+
+# Allow multiple memoized helpers in specs
+RSpec/MultipleMemoizedHelpers:
+  Exclude:
+    - 'spec/**/*'
+
+# Allow create_list with more than 10 items in tests
+FactoryBot/ExcessiveCreateList:
+  Enabled: false
+
+# Allow message spies (prefer have_received) - style preference
+RSpec/MessageSpies:
+  Enabled: false
+
+# Allow spec file path format variations
+RSpec/SpecFilePathFormat:
+  Enabled: false
+
+# Allow let! for setup objects
+RSpec/LetSetup:
+  Enabled: false
+
+# Allow any_instance_of stubbing (sometimes necessary)
+RSpec/AnyInstance:
+  Enabled: false
+
+# Allow nested groups (sometimes necessary for complex test organization)
+RSpec/NestedGroups:
+  Enabled: false
+
+# Allow string descriptions in integration specs (they test workflows, not classes)
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/integration/**/*'
+    - 'spec/requests/**/*'
 # Overrides can go here if needed
 

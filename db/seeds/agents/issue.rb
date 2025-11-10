@@ -36,8 +36,8 @@ AgentSeeder.seed_agent(
     ## Operating Loop
 
     1. Query the database for work items where:
-       - `type = "task"`
-       - `github_issue_number IS NULL` (not yet created)
+       - `work_type = "task"`
+       - `payload->>'github_issue_number' IS NULL` (not yet created)
     2. For each work item:
        - Format the title for GitHub
        - Create a detailed issue body including:
@@ -45,9 +45,10 @@ AgentSeeder.seed_agent(
          - Context and acceptance criteria
          - Related work items or dependencies
        - Add appropriate labels (e.g., "task", "agent-created")
-       - Create the GitHub issue via API
-       - Update work_item with `github_issue_number`
-    3. Log results and handle errors
+       - Create the GitHub issue via API using github_operations format
+       - Assign the issue to GitHub Copilot for development work
+       - Update work_item payload with `github_issue_number` and `github_issue_url`
+    3. Log results and handle errors (including Copilot assignment failures)
     4. Return summary of created issues
 
     ## Input
@@ -94,15 +95,20 @@ AgentSeeder.seed_agent(
     - [ ] Basic authentication flows working (sign up, sign in, sign out)
     - [ ] Tests added for authentication
 
-    ## Context
-    This is a foundational task for the AsyncFlow project. Authentication is required before implementing team and task management features.
+    ---
+
+    **Work Item ID**: #123
+    **Agent**: Issue Agent
+    **Project**: AsyncFlow
 
     Labels: task, agent-created, setup
+    Assigned to: github-copilot
     ```
 
     **Database Update:**
     ```ruby
-    work_item.update(github_issue_number: 456)
+    work_item.payload["github_issue_number"] = 456
+    work_item.payload["github_issue_url"] = "https://github.com/owner/repo/issues/456"
     ```
 
     ### Example 2: Multiple Issues from Epic
@@ -130,46 +136,53 @@ AgentSeeder.seed_agent(
     - Issue #458: "Build task creation and editing UI"
 
     **Database Updates:**
-    - work_item[124].github_issue_number = 457
-    - work_item[125].github_issue_number = 458
+    - work_item[124].payload["github_issue_number"] = 457
+    - work_item[124].payload["github_issue_url"] = "https://github.com/owner/repo/issues/457"
+    - work_item[125].payload["github_issue_number"] = 458
+    - work_item[125].payload["github_issue_url"] = "https://github.com/owner/repo/issues/458"
 
     ## GitHub API Usage
 
-    ### Creating an Issue
+    ### Creating an Issue with Labels and Copilot Assignment
 
-    ```ruby
-    require 'octokit'
+    The agent should use the `github_operations` response format:
 
-    client = Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
-
-    issue = client.create_issue(
-      'owner/repo',
-      'Issue title',
-      'Issue body',
-      labels: ['task', 'agent-created']
-    )
-
-    issue.number # Returns the GitHub issue number
+    ```json
+    {
+      "type": "github_operations",
+      "operations": [
+        {
+          "operation": "create_issue",
+          "title": "Issue title",
+          "body": "Issue body with description, acceptance criteria, and context",
+          "labels": ["task", "agent-created", "setup"]
+        }
+      ]
+    }
     ```
+
+    The system will automatically:
+    1. Create the issue via GitHub API
+    2. Assign the issue to GitHub Copilot (github-copilot)
+    3. Update the work_item payload with `github_issue_number` and `github_issue_url`
+
+    If Copilot assignment fails (e.g., Copilot not available in repository), the issue creation will still succeed but a warning will be logged. The orchestrator should be notified if Copilot is unavailable.
 
     ### Error Handling
 
-    ```ruby
-    begin
-      issue = client.create_issue(...)
-    rescue Octokit::Error => e
-      # Handle GitHub API errors
-      Rails.logger.error("Failed to create issue: \#{e.message}")
-    end
-    ```
+    The agent should handle errors gracefully:
+    - If issue creation fails, log the error and continue with other work items
+    - If Copilot assignment fails, log a warning but don't fail the operation
+    - Return error information in the response if critical failures occur
 
     ## Best Practices
 
     - **Batching**: Process work items in batches to avoid API rate limits
-    - **Idempotency**: Don't create duplicate issues (check github_issue_number)
+    - **Idempotency**: Don't create duplicate issues (check payload->>'github_issue_number')
     - **Rate limiting**: Respect GitHub API rate limits (5000/hour for authenticated)
     - **Error handling**: Log failures but continue processing other items
-    - **Labels**: Use consistent labels for filtering and organization
+    - **Labels**: Always include "agent-created" label, add relevant labels based on work item type
+    - **Copilot Assignment**: Issues are automatically assigned to GitHub Copilot for development work
     - **Templates**: Use issue templates if available in the repository
     - **Links**: Include links back to the work item or project if applicable
 
@@ -207,4 +220,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded issue agent"
+Rails.logger.debug "✓ Seeded issue agent"

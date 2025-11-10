@@ -65,43 +65,23 @@
 
   <div>
     <%= form.label :github_pat, "GitHub PAT", class: "block text-sm font-medium text-gray-700" %>
-    <%= form.password_field :github_pat,
+    <%= form.text_field :github_pat,
         class: "mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
         placeholder: "github_pat_...",
-        value: "" %>
+        value: @project.github_pat %>
     <p class="mt-2 text-sm text-gray-500">
       GitHub Personal Access Token (stored securely in database)
-      <% if @project.persisted? %>
-        <% if @project.github_pat.present? %>
-          <span class="text-green-600 font-medium">✓ Currently set</span>
-          <% if @project.slug == "synorg-demo" %>
-            <span class="text-gray-500">(loaded from Rails credentials)</span>
-          <% end %>
-        <% else %>
-          <span class="text-gray-400">(Enter new value to update, leave blank to keep existing)</span>
-        <% end %>
-      <% end %>
     </p>
   </div>
 
   <div>
     <%= form.label :webhook_secret, "Webhook Secret", class: "block text-sm font-medium text-gray-700" %>
-    <%= form.password_field :webhook_secret,
+    <%= form.text_field :webhook_secret,
         class: "mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
         placeholder: "webhook-secret...",
-        value: "" %>
+        value: @project.webhook_secret %>
     <p class="mt-2 text-sm text-gray-500">
       GitHub webhook secret for signature verification (stored securely in database)
-      <% if @project.persisted? %>
-        <% if @project.webhook_secret.present? %>
-          <span class="text-green-600 font-medium">✓ Currently set</span>
-          <% if @project.slug == "synorg-demo" %>
-            <span class="text-gray-500">(loaded from Rails credentials)</span>
-          <% end %>
-        <% else %>
-          <span class="text-gray-400">(Enter new value to update, leave blank to keep existing)</span>
-        <% end %>
-      <% end %>
     </p>
   </div>
 </div>

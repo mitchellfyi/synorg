@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Agent, type: :model do
+RSpec.describe Agent do
   describe "validations" do
     subject { described_class.new(key: "test-agent", name: "Test Agent") }
 

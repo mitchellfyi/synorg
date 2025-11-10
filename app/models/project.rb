@@ -14,7 +14,7 @@ class Project < ApplicationRecord
   has_many :integrations, dependent: :destroy
   has_many :policies, dependent: :destroy
   has_many :webhook_events, dependent: :destroy
-  has_many :activities, class_name: "Activity", foreign_key: :project_id, dependent: :destroy
+  has_many :activities, class_name: "Activity", dependent: :destroy
 
   validates :slug, presence: true, uniqueness: true
   validates :state, presence: true
@@ -101,7 +101,7 @@ class Project < ApplicationRecord
   def orchestrator_running?
     # Check if work items were created very recently (within last 10 seconds)
     # This is a proxy for orchestrator running since orchestrator creates work items synchronously
-    work_items.where("created_at > ?", 10.seconds.ago).exists?
+    work_items.exists?(["created_at > ?", 10.seconds.ago])
   end
 
   private

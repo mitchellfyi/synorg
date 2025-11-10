@@ -99,4 +99,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded dependabot-setup agent"
+Rails.logger.debug "✓ Seeded dependabot-setup agent"

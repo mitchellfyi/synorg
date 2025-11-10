@@ -3,6 +3,9 @@
 require "json"
 require_relative "../lib/structured_logger"
 require_relative "../lib/llm_output_schema"
+require_relative "execution_strategies/database_strategy"
+require_relative "execution_strategies/file_write_strategy"
+require_relative "execution_strategies/github_api_strategy"
 
 # Generic Agent Runner
 #
@@ -81,6 +84,7 @@ class AgentRunner
         outcome: "failure",
         logs: parsed_response[:error] || "Unknown error"
       )
+      work_item.update!(status: "failed")
       return {
         success: false,
         error: parsed_response[:error] || "Unknown error"
@@ -122,6 +126,8 @@ class AgentRunner
         logs: e.message
       )
     end
+    # Update work item status on exception
+    work_item.update!(status: "failed")
     StructuredLogger.error(
       "AgentRunner failed",
       agent_id: agent.id,
@@ -291,11 +297,23 @@ class AgentRunner
 
   def update_run_records(result, run)
     # Update run record with outcome
-    run.update!(
+    update_hash = {
       finished_at: Time.current,
       outcome: result[:success] ? "success" : "failure",
       logs: result[:message] || result[:error] || "Execution completed"
-    )
+    }
+
+    # Store PR information if available
+    if result[:pr_info]
+      update_hash[:github_pr_number] = result[:pr_info][:pr_number] || result[:pr_info]["pr_number"]
+      update_hash[:github_pr_head_sha] = result[:pr_info][:pr_head_sha] || result[:pr_info]["pr_head_sha"]
+      # Also update artifacts_url with PR URL
+      if result[:pr_info][:url] || result[:pr_info]["url"]
+        update_hash[:artifacts_url] = result[:pr_info][:url] || result[:pr_info]["url"]
+      end
+    end
+
+    run.update!(update_hash)
 
     # Update work item status
     if result[:success]

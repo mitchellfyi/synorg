@@ -125,4 +125,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded readme-setup agent"
+Rails.logger.debug "✓ Seeded readme-setup agent"

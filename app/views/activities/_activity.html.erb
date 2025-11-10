@@ -16,6 +16,38 @@
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= activity_color_badge(activity) %>">
               <%= activity.key.split(".").last.titleize %>
             </span>
+            <% if activity.trackable_type == "WorkItem" && activity.trackable %>
+              <% work_item = activity.trackable %>
+              <% if work_item.payload["github_issue_url"] %>
+                <%= link_to work_item.payload["github_issue_url"], target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800" do %>
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Issue
+                <% end %>
+              <% end %>
+              <% if work_item.payload["github_pr_url"] %>
+                <%= link_to work_item.payload["github_pr_url"], target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800" do %>
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  PR
+                <% end %>
+              <% end %>
+            <% elsif activity.trackable_type == "Run" && activity.trackable %>
+              <% run = activity.trackable %>
+              <% if run.github_pr_number || run.work_item.payload["github_pr_url"] %>
+                <% pr_url = run.work_item.payload["github_pr_url"] || (run.work_item.project.repo_full_name && "https://github.com/#{run.work_item.project.repo_full_name}/pull/#{run.github_pr_number}") %>
+                <% if pr_url %>
+                  <%= link_to pr_url, target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800" do %>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    PR
+                  <% end %>
+                <% end %>
+              <% end %>
+            <% end %>
           </div>
 
           <% if activity.owner %>

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require_relative "../../app/services/execution_strategies/github_api_strategy"
 
 # Integration tests for full agent execution flow
 # Tests the complete flow: AgentRunner → LLM → Execution Strategy → Results
@@ -13,30 +14,13 @@ RSpec.describe "Agent Execution Integration" do
       repo_full_name: "test/repo",
       repo_default_branch: "main")
   end
-
-  let(:mock_llm_client) { instance_double(OpenAI::Client) }
-  let(:mock_llm_response) do
-    {
-      "choices" => [
-        {
-          "message" => {
-            "content" => llm_content
-          }
-        }
-      ],
-      "usage" => {
-        "prompt_tokens" => 100,
-        "completion_tokens" => 50,
-        "total_tokens" => 150
-      }
-    }
-  end
+  let(:mock_llm_service) { instance_double(LlmService, model: "gpt-4o-mini") }
 
   before do
-    # Mock OpenAI client to avoid real API calls
-    allow(OpenAI::Client).to receive(:new).and_return(mock_llm_client)
-    allow(mock_llm_client).to receive(:chat).and_return(mock_llm_response)
+    # Mock LlmService to avoid real API calls
+    allow(LlmService).to receive(:new).and_return(mock_llm_service)
   end
+
 
   describe "FileWriteStrategy integration" do
     let(:agent) { create(:agent, key: "gtm", name: "GTM Agent", prompt: "Generate product positioning") }
@@ -48,10 +32,19 @@ RSpec.describe "Agent Execution Integration" do
           { path: "docs/positioning.md", content: "# Product Positioning\n\nTest content" },
           { path: "docs/market.md", content: "# Market Analysis\n\nTest analysis" }
         ]
-      }.to_json
+      }
     end
 
     it "executes full flow: LLM → FileWriteStrategy → file system" do
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: llm_content,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
+      )
+
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
 
       expect do
@@ -61,8 +54,8 @@ RSpec.describe "Agent Execution Integration" do
       end.to change { work_item.reload.status }.from("pending").to("completed")
 
       # Verify files were created
-      expect(File.exist?(Rails.root.join("docs/positioning.md"))).to be true
-      expect(File.exist?(Rails.root.join("docs/market.md"))).to be true
+      expect(Rails.root.join("docs/positioning.md").exist?).to be true
+      expect(Rails.root.join("docs/market.md").exist?).to be true
 
       # Verify run record was created/updated
       run = work_item.runs.order(started_at: :desc).first
@@ -75,12 +68,16 @@ RSpec.describe "Agent Execution Integration" do
       # Cleanup
       FileUtils.rm_f(Rails.root.join("docs/positioning.md"))
       FileUtils.rm_f(Rails.root.join("docs/market.md"))
-      FileUtils.rm_rf(Rails.root.join("docs")) if Dir.exist?(Rails.root.join("docs"))
+      FileUtils.rm_rf(Rails.root.join("docs")) if Rails.root.join("docs").exist?
     end
 
     it "updates work item status on failure" do
       # Simulate LLM error
-      allow(mock_llm_client).to receive(:chat).and_raise(StandardError.new("API error"))
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: nil,
+        usage: {},
+        error: "API error"
+      )
 
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
       result = runner.run
@@ -112,17 +109,29 @@ RSpec.describe "Agent Execution Integration" do
             payload: { title: "Bug 1", description: "First bug" }
           }
         ]
-      }.to_json
+      }
     end
 
     it "executes full flow: LLM → DatabaseStrategy → database" do
+      # Ensure agent exists before running
+      other_agent
+
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: llm_content,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
+      )
+
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
 
       expect do
         result = runner.run
         expect(result[:success]).to be true
         expect(result[:work_items_created]).to eq(2)
-      end.to change { WorkItem.count }.by(2)
+      end.to change(WorkItem, :count).by(2)
         .and change { work_item.reload.status }.from("pending").to("completed")
 
       # Verify work items were created
@@ -148,16 +157,13 @@ RSpec.describe "Agent Execution Integration" do
         ]
       }.to_json
 
-      allow(mock_llm_client).to receive(:chat).and_return(
-        mock_llm_response.merge(
-          "choices" => [
-            {
-              "message" => {
-                "content" => llm_content_invalid
-              }
-            }
-          ]
-        )
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: JSON.parse(llm_content_invalid),
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
       )
 
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
@@ -169,7 +175,7 @@ RSpec.describe "Agent Execution Integration" do
     end
   end
 
-  describe "GitHubApiStrategy integration" do
+  describe "GitHubApiStrategy integration for issues" do
     let(:agent) { create(:agent, key: "issue", name: "Issue Agent", prompt: "Create GitHub issues") }
     let(:work_item) { create(:work_item, project: project, work_type: "issue", status: "pending") }
     let(:project_with_pat) { create(:project, github_pat: "test-token", repo_full_name: "test/repo") }
@@ -183,7 +189,7 @@ RSpec.describe "Agent Execution Integration" do
             body: "This is a test issue"
           }
         ]
-      }.to_json
+      }
     end
 
     before do
@@ -201,6 +207,15 @@ RSpec.describe "Agent Execution Integration" do
 
     it "executes full flow: LLM → GitHubApiStrategy → GitHub API" do
       work_item.update!(project: project_with_pat)
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: llm_content,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
+      )
+
       runner = AgentRunner.new(agent: agent, project: project_with_pat, work_item: work_item)
 
       result = runner.run
@@ -219,6 +234,16 @@ RSpec.describe "Agent Execution Integration" do
     end
 
     it "handles missing PAT gracefully" do
+      # Mock LLM to return a valid response (the strategy will check PAT)
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: llm_content,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
+      )
+
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
       result = runner.run
 
@@ -227,7 +252,7 @@ RSpec.describe "Agent Execution Integration" do
     end
   end
 
-  describe "GitHubApiStrategy integration" do
+  describe "GitHubApiStrategy integration for PRs" do
     let(:agent) { create(:agent, key: "rubocop-setup", name: "RuboCop Setup", prompt: "Setup RuboCop") }
     let(:work_item) { create(:work_item, project: project, work_type: "rubocop_setup", status: "pending") }
     let(:project_with_pat) { create(:project, github_pat: "test-token", repo_full_name: "test/repo") }
@@ -244,22 +269,104 @@ RSpec.describe "Agent Execution Integration" do
             ]
           }
         ]
-      }.to_json
+      }
     end
 
     before do
-      # Mock GitHub API calls
-      allow_any_instance_of(GitHubApiStrategy).to receive(:get_branch_sha).and_return("abc123")
-      allow_any_instance_of(GitHubApiStrategy).to receive(:create_branch).and_return(true)
-      allow_any_instance_of(GitHubApiStrategy).to receive(:create_file_in_branch).and_return(true)
-      allow_any_instance_of(GithubService).to receive(:create_pull_request).and_return({
-        "number" => 1,
-        "html_url" => "https://github.com/test/repo/pull/1"
-      })
+      # Mock GitHub API calls with WebMock
+      stub_request(:get, "https://api.github.com/repos/test/repo/git/ref/heads/main")
+        .with(
+          headers: {
+            "Authorization" => "Bearer test-token",
+            "Accept" => "application/vnd.github.v3+json"
+          }
+        )
+        .to_return(
+          status: 200,
+          body: {
+            object: {
+              sha: "abc123"
+            }
+          }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      stub_request(:post, "https://api.github.com/repos/test/repo/git/refs")
+        .with(
+          headers: {
+            "Authorization" => "Bearer test-token",
+            "Accept" => "application/vnd.github.v3+json",
+            "Content-Type" => "application/json"
+          }
+        ) do |request|
+          body = JSON.parse(request.body)
+          body["ref"]&.start_with?("refs/heads/agent/rubocop-setup-") && body["sha"] == "abc123"
+        end
+        .to_return(
+          status: 201,
+          body: {}.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      stub_request(:get, /https:\/\/api\.github\.com\/repos\/test\/repo\/contents\/.*\?ref=agent\/rubocop-setup-.*/)
+        .with(
+          headers: {
+            "Authorization" => "Bearer test-token",
+            "Accept" => "application/vnd.github.v3+json"
+          }
+        )
+        .to_return(
+          status: 404,
+          body: { message: "Not Found" }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      stub_request(:put, /https:\/\/api\.github\.com\/repos\/test\/repo\/contents\/.*/)
+        .with(
+          headers: {
+            "Authorization" => "Bearer test-token",
+            "Accept" => "application/vnd.github.v3+json",
+            "Content-Type" => "application/json"
+          }
+        )
+        .to_return(
+          status: 201,
+          body: {}.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      stub_request(:post, "https://api.github.com/repos/test/repo/pulls")
+        .with(
+          headers: {
+            "Authorization" => "Bearer test-token",
+            "Accept" => "application/vnd.github.v3+json",
+            "Content-Type" => "application/json"
+          }
+        )
+        .to_return(
+          status: 201,
+          body: {
+            number: 1,
+            html_url: "https://github.com/test/repo/pull/1",
+            head: {
+              sha: "def456"
+            }
+          }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
     end
 
     it "executes full flow: LLM → GitHubApiStrategy → GitHub API" do
       work_item.update!(project: project_with_pat)
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: llm_content,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
+      )
+
       runner = AgentRunner.new(agent: agent, project: project_with_pat, work_item: work_item)
 
       result = runner.run
@@ -276,6 +383,10 @@ RSpec.describe "Agent Execution Integration" do
     let(:work_item) { create(:work_item, project: project, work_type: "orchestrator", status: "pending") }
 
     it "simulates orchestrator creating work items for other agents" do
+      # Ensure agents exist before running
+      gtm_agent
+      pm_agent
+
       llm_content = {
         type: "work_items",
         work_items: [
@@ -292,18 +403,15 @@ RSpec.describe "Agent Execution Integration" do
             payload: { description: "Create work items" }
           }
         ]
-      }.to_json
+      }
 
-      allow(mock_llm_client).to receive(:chat).and_return(
-        mock_llm_response.merge(
-          "choices" => [
-            {
-              "message" => {
-                "content" => llm_content
-              }
-            }
-          ]
-        )
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: llm_content,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
       )
 
       runner = AgentRunner.new(agent: orchestrator_agent, project: project, work_item: work_item)
@@ -312,7 +420,7 @@ RSpec.describe "Agent Execution Integration" do
         result = runner.run
         expect(result[:success]).to be true
         expect(result[:work_items_created]).to eq(2)
-      end.to change { WorkItem.count }.by(2)
+      end.to change(WorkItem, :count).by(2)
 
       # Verify created work items are assigned to correct agents
       created_items = WorkItem.last(2)
@@ -326,28 +434,29 @@ RSpec.describe "Agent Execution Integration" do
     let(:work_item) { create(:work_item, project: project, work_type: "gtm", status: "pending") }
 
     it "handles invalid JSON from LLM" do
-      allow(mock_llm_client).to receive(:chat).and_return(
-        mock_llm_response.merge(
-          "choices" => [
-            {
-              "message" => {
-                "content" => "This is not valid JSON"
-              }
-            }
-          ]
-        )
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: "This is not valid JSON",
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
       )
 
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
       result = runner.run
 
       expect(result[:success]).to be false
-      expect(result[:error]).to include("Failed to parse LLM response")
+      expect(result[:error]).to include("Response validation failed")
       expect(work_item.reload.status).to eq("failed")
     end
 
     it "handles LLM API errors" do
-      allow(mock_llm_client).to receive(:chat).and_raise(StandardError.new("API rate limit exceeded"))
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: nil,
+        usage: {},
+        error: "API rate limit exceeded"
+      )
 
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
       result = runner.run
@@ -358,11 +467,9 @@ RSpec.describe "Agent Execution Integration" do
     end
 
     it "handles empty LLM response" do
-      allow(mock_llm_client).to receive(:chat).and_return(
-        {
-          "choices" => [],
-          "usage" => {}
-        }
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: nil,
+        usage: {}
       )
 
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
@@ -380,17 +487,25 @@ RSpec.describe "Agent Execution Integration" do
       {
         type: "file_writes",
         files: [{ path: "test.md", content: "# Test" }]
-      }.to_json
+      }
     end
 
     it "updates run record with outcome and timing after execution" do
-      # Create initial run record (simulating what execution strategy would do)
-      run = create(:run, agent: agent, work_item: work_item, started_at: Time.current)
+      allow(mock_llm_service).to receive(:chat).and_return(
+        content: llm_content,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        }
+      )
 
       runner = AgentRunner.new(agent: agent, project: project, work_item: work_item)
       runner.run
 
-      run.reload
+      # AgentRunner creates its own run record, so query for it
+      run = work_item.runs.order(started_at: :desc).first
+      expect(run).to be_present
       expect(run.outcome).to eq("success")
       expect(run.finished_at).to be_present
       expect(run.finished_at).to be > run.started_at

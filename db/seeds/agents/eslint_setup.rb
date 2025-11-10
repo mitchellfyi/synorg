@@ -134,4 +134,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded eslint-setup agent"
+Rails.logger.debug "✓ Seeded eslint-setup agent"

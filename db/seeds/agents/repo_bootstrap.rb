@@ -102,4 +102,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded repo-bootstrap agent"
+Rails.logger.debug "✓ Seeded repo-bootstrap agent"

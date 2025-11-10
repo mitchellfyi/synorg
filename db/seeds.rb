@@ -10,7 +10,7 @@ return if Rails.env.test?
 # NOTE: Agents are GLOBAL resources - they are not tied to any specific project.
 # Agents can be used by any project through work items. The orchestrator agent
 # can assign agents to work items as needed.
-Dir[Rails.root.join("db/seeds/agents/*.rb")].sort.each do |file|
+Rails.root.glob("db/seeds/agents/*.rb").sort.each do |file|
   # Skip helpers.rb as it's loaded by individual seed files
   next if file.include?("helpers.rb")
 
@@ -52,23 +52,23 @@ demo_pat = Rails.application.credentials.dig(:demo, :pat)
 demo_webhook_secret = Rails.application.credentials.dig(:demo, :webhook_secret)
 
 if demo_pat.present?
-  project.update_column(:github_pat, demo_pat)
+  project.update!(github_pat: demo_pat)
 end
 
 if demo_webhook_secret.present?
-  project.update_column(:webhook_secret, demo_webhook_secret)
+  project.update!(webhook_secret: demo_webhook_secret)
 end
 
-puts "✓ Created project: #{project.name} (#{project.slug})"
+Rails.logger.debug { "✓ Created project: #{project.name} (#{project.slug})" }
 
 # Agents are global resources seeded above (not project-specific)
 # They can be used by any project through work items assigned by the orchestrator
-puts "✓ Available agents: #{Agent.count} total"
-puts "   - #{Agent.enabled.pluck(:key).join(', ')}"
+Rails.logger.debug { "✓ Available agents: #{Agent.count} total" }
+Rails.logger.debug { "   - #{Agent.enabled.pluck(:key).join(', ')}" }
 
 # Orchestrator agent will create work items based on project state
 # No need to manually create work items here
-puts "✓ Work items will be created by orchestrator agent based on project state"
+Rails.logger.debug "✓ Work items will be created by orchestrator agent based on project state"
 
 # Create sample integrations
 Integration.find_or_create_by!(
@@ -89,7 +89,7 @@ Integration.find_or_create_by!(
   i.status = "active"
 end
 
-puts "✓ Created integrations: #{Integration.count} total"
+Rails.logger.debug { "✓ Created integrations: #{Integration.count} total" }
 
 # Create sample policies
 Policy.find_or_create_by!(project: project, key: "require_approval") do |p|
@@ -105,11 +105,11 @@ Policy.find_or_create_by!(project: project, key: "ci_timeout") do |p|
   }
 end
 
-puts "✓ Created policies: #{Policy.count} total"
+Rails.logger.debug { "✓ Created policies: #{Policy.count} total" }
 
-puts "\n🎉 Seed data created successfully!"
-puts "   - Project: #{project.name}"
-puts "   - Agents: #{Agent.count}"
-puts "   - Work Items: #{WorkItem.count}"
-puts "   - Integrations: #{Integration.count}"
-puts "   - Policies: #{Policy.count}"
+Rails.logger.debug "\n🎉 Seed data created successfully!"
+Rails.logger.debug { "   - Project: #{project.name}" }
+Rails.logger.debug { "   - Agents: #{Agent.count}" }
+Rails.logger.debug { "   - Work Items: #{WorkItem.count}" }
+Rails.logger.debug { "   - Integrations: #{Integration.count}" }
+Rails.logger.debug { "   - Policies: #{Policy.count}" }

@@ -114,4 +114,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded rubocop-setup agent"
+Rails.logger.debug "✓ Seeded rubocop-setup agent"

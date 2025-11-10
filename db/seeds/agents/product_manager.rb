@@ -176,4 +176,4 @@ AgentSeeder.seed_agent(
   PROMPT
 )
 
-puts "✓ Seeded product-manager agent"
+Rails.logger.debug "✓ Seeded product-manager agent"

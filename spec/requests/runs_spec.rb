@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Runs", type: :request do
+RSpec.describe "Runs" do
   let(:project) { create(:project) }
   let(:agent) { create(:agent) }
   let(:work_item) { create(:work_item, project: project) }

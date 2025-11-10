@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "uri"
+
 class Run < ApplicationRecord
   include PublicActivity::Model
 
@@ -10,9 +12,6 @@ class Run < ApplicationRecord
 
   belongs_to :agent
   belongs_to :work_item
-
-  validates :agent, presence: true
-  validates :work_item, presence: true
 
   scope :successful, -> { where(outcome: "success") }
   scope :failed, -> { where(outcome: "failure") }
@@ -40,7 +39,29 @@ class Run < ApplicationRecord
   after_create_commit -> { broadcast_prepend_to "project_#{work_item.project_id}", target: "recent_runs_#{work_item.project_id}", partial: "runs/run", locals: { run: self, recent_runs: [] } }
   after_update_commit -> { broadcast_replace_to "project_#{work_item.project_id}", partial: "runs/run", locals: { run: self, recent_runs: [] } }
 
+  # Validate URLs to prevent XSS attacks
+  def safe_logs_url
+    return nil if logs_url.blank?
+    return nil unless valid_url?(logs_url)
+
+    logs_url
+  end
+
+  def safe_artifacts_url
+    return nil if artifacts_url.blank?
+    return nil unless valid_url?(artifacts_url)
+
+    artifacts_url
+  end
+
   private
+
+  def valid_url?(url)
+    uri = URI.parse(url.to_s)
+    uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+  rescue URI::InvalidURIError
+    false
+  end
 
   def create_activity(key, parameters: {})
     Activity.create!(
