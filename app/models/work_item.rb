@@ -15,4 +15,5 @@ class WorkItem < ApplicationRecord
   scope :failed, -> { where(status: "failed") }
   scope :unlocked, -> { where(locked_at: nil) }
   scope :by_priority, -> { order(priority: :desc, created_at: :asc) }
+  scope :tasks, -> { where(work_type: "task") }
 end

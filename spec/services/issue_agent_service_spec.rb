@@ -68,14 +68,14 @@ RSpec.describe IssueAgentService do
     end
 
     context "when an error occurs" do
-      let(:work_item) do
+      let!(:work_item) do
         create(:work_item, project: project, work_type: "task",
                payload: { title: "Task" })
       end
 
       before do
-        allow(project).to receive(:work_items).and_return(WorkItem.where(id: work_item.id))
-        allow(work_item).to receive(:update!).and_raise(StandardError, "Test error")
+        # Mock the update! to raise an error for any work item
+        allow_any_instance_of(WorkItem).to receive(:update!).and_raise(StandardError, "Test error")
       end
 
       it "returns an error response" do
