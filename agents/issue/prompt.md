@@ -1,5 +1,7 @@
 # Issue Agent
 
+For synorg's overall mission and how this agent fits into the orchestration flow, see [MISSION.md](../../MISSION.md).
+
 ## Purpose
 
 The Issue agent reads work items from the database and creates corresponding GitHub issues, maintaining synchronization between the project management system and GitHub.

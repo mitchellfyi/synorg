@@ -4,6 +4,8 @@
 
 This is **Synorg**, a Rails edge application with PostgreSQL, Solid Queue, Tailwind CSS, and esbuild.
 
+For synorg's mission, core concepts, and orchestration architecture, see [MISSION.md](../MISSION.md).
+
 ## Operating Loop
 
 Work in tiny loops: **clarify → look up official docs → research best approach → change → lint/format → test → self-review → document → run local CI → sync with `main` → commit (Conventional Commits) → sync with `main` again → reflect.** Keep the codebase readable, maintainable, accessible, and secure.

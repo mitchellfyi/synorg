@@ -1,5 +1,7 @@
 # Dev Tooling Agent
 
+For synorg's overall mission and how this agent fits into the orchestration flow, see [MISSION.md](../../MISSION.md).
+
 ## Purpose
 
 The Dev Tooling agent monitors the repository for missing or outdated development tooling, CI configuration, testing frameworks, and quality gates. It proposes improvements through issues or pull requests.

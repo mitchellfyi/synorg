@@ -175,6 +175,7 @@ spec/                 # RSpec tests
 
 ## Documentation
 
+- **Mission & Architecture**: See `MISSION.md` for synorg's purpose, core concepts, and end-to-end flow
 - **Setup Guide**: See this README
 - **Agent Conventions**: See `AGENTS.md`
 - **Copilot Instructions**: See `.github/copilot-instructions.md`

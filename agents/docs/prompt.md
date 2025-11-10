@@ -1,5 +1,7 @@
 # Docs Agent
 
+For synorg's overall mission and how this agent fits into the orchestration flow, see [MISSION.md](../../MISSION.md).
+
 ## Purpose
 
 The Docs agent generates and maintains project documentation based on the project brief, GTM positioning, and product management scope.
