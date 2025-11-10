@@ -37,6 +37,7 @@ class ProjectsController < ApplicationController
 
   def edit
   end
+
   def create
     @project = Project.new(project_params)
     @project.state = "draft"
