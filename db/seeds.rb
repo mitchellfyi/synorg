@@ -6,58 +6,69 @@
 # Skip seeding in test environment to avoid interfering with test specs
 return if Rails.env.test?
 
-# Create sample project
-project = Project.find_or_create_by!(slug: "demo-app") do |p|
-  p.name = "Demo Application"
+# Load agent seed files (each agent has its own seed file)
+Dir[Rails.root.join("db/seeds/agents/*.rb")].sort.each do |file|
+  # Skip helpers.rb as it's loaded by individual seed files
+  next if file.include?("helpers.rb")
+
+  load file
+end
+
+# Create demo project with real GitHub repository
+# The PAT is stored in Rails credentials under demo:pat and accessed via project.github_pat_secret_name
+# The webhook secret is stored in Rails credentials under demo:webhook_secret
+project = Project.find_or_create_by!(slug: "synorg-demo") do |p|
+  p.name = "Synorg Demo"
   p.state = "draft"
-  p.brief = "A demonstration project for synorg"
-  p.repo_full_name = "example/demo-app"
+  p.brief = <<~BRIEF
+    A demonstration project for synorg using the synorg-demo repository.
+    This project showcases synorg's capabilities for managing AI agent workflows
+    and GitHub integration.
+    
+    Features to demonstrate:
+    - Project lifecycle management
+    - Work item creation and tracking
+    - Agent execution and assignment
+    - GitHub issue synchronization
+    - Workspace operations (clone, branch, commit, PR)
+    - CI/CD integration
+  BRIEF
+  p.repo_full_name = "mitchellfyi/synorg-demo"
   p.repo_default_branch = "main"
-  p.github_pat_secret_name = "GITHUB_PAT_DEMO"
-  p.webhook_secret_name = "WEBHOOK_SECRET_DEMO"
+  p.github_pat_secret_name = "demo:pat"
+  p.webhook_secret = Rails.application.credentials.dig(:demo, :webhook_secret)
   p.gates_config = {
     "require_review" => true,
     "require_tests" => true,
-    "require_linting" => true
+    "require_linting" => true,
+    "require_e2e" => false
   }
-  p.e2e_required = true
+  p.e2e_required = false
 end
 
 puts "✓ Created project: #{project.name} (#{project.slug})"
 
-# Create sample agents
-Agent.find_or_create_by!(key: "code-reviewer") do |a|
-  a.name = "Code Reviewer"
-  a.description = "Reviews code changes for quality and best practices"
-  a.capabilities = {
-    "languages" => ["ruby", "javascript", "python"],
-    "max_file_size" => 100_000
-  }
-  a.max_concurrency = 3
-  a.enabled = true
-end
+# Agents are seeded from db/seeds/agents/*.rb files
+puts "✓ Available agents: #{Agent.count} total"
+puts "   - #{Agent.enabled.pluck(:key).join(', ')}"
 
-Agent.find_or_create_by!(key: "test-runner") do |a|
-  a.name = "Test Runner"
-  a.description = "Runs automated tests on pull requests"
-  a.capabilities = {
-    "frameworks" => ["rspec", "jest", "pytest"]
-  }
-  a.max_concurrency = 5
-  a.enabled = true
+# Create repo bootstrap work item for demo project
+repo_bootstrap_agent = Agent.find_by(key: "repo-bootstrap")
+if repo_bootstrap_agent
+  WorkItem.find_or_initialize_by(
+    project: project,
+    work_type: "repo_bootstrap"
+  ).tap do |wi|
+    wi.payload = {
+      "title" => "Bootstrap Rails application",
+      "description" => "Initialize Rails 8.1 application with PostgreSQL, Solid Queue, Tailwind CSS v4, TypeScript, and esbuild"
+    }
+    wi.status = "pending"
+    wi.priority = 1
+    wi.assigned_agent = repo_bootstrap_agent
+    wi.save!
+  end
 end
-
-Agent.find_or_create_by!(key: "deployer") do |a|
-  a.name = "Deployment Agent"
-  a.description = "Handles deployment to staging and production"
-  a.capabilities = {
-    "environments" => ["staging", "production"]
-  }
-  a.max_concurrency = 1
-  a.enabled = false
-end
-
-puts "✓ Created agents: #{Agent.count} total"
 
 # Create sample work items
 WorkItem.find_or_initialize_by(

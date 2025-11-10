@@ -75,7 +75,7 @@ class GithubWebhookController < ApplicationController
   # 1. Using a custom header (e.g., X-Project-ID) to identify the project
   # 2. Using webhook URLs with project identifiers (e.g., /github/webhook/:project_id)
   # 3. Caching webhook secrets in memory (Redis/Memcached)
-  # 4. Using a database index on webhook_secret_name
+  # 4. Using a database index on webhook_secret
   #
   # @param request_body [String] The raw request body
   # @param signature [String] The X-Hub-Signature-256 header value
@@ -83,12 +83,12 @@ class GithubWebhookController < ApplicationController
   def find_project_by_signature(request_body, signature)
     return nil unless signature
 
-    # Optimize by only loading necessary fields and filtering out null webhook_secret_name
-    Project.where.not(webhook_secret_name: nil)
-      .select(:id, :webhook_secret_name)
+    # Optimize by only loading necessary fields and filtering out null webhook_secret
+    Project.where.not(webhook_secret: nil)
+      .select(:id, :webhook_secret)
       .find_each do |project|
-      # Get the secret from Rails credentials or environment
-      secret = fetch_secret(project.webhook_secret_name)
+      # Get the secret directly from the project record
+      secret = project.webhook_secret
       next unless secret
 
       # Verify the signature
@@ -99,15 +99,5 @@ class GithubWebhookController < ApplicationController
     end
 
     nil
-  end
-
-  # Fetch a secret from Rails credentials
-  #
-  # @param secret_name [String] The name of the secret in credentials
-  # @return [String, nil] The secret value or nil
-  def fetch_secret(secret_name)
-    # In production, secrets would be stored in Rails.application.credentials
-    # or environment variables. For now, we'll check ENV first, then credentials.
-    ENV[secret_name] || Rails.application.credentials.dig(:github, secret_name.to_sym)
   end
 end

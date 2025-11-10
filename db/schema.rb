@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_09_125535) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_09_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_09_125535) do
     t.string "key", null: false
     t.integer "max_concurrency", default: 1
     t.string "name", null: false
+    t.text "prompt"
     t.datetime "updated_at", null: false
     t.index ["enabled"], name: "index_agents_on_enabled"
     t.index ["key"], name: "index_agents_on_key", unique: true
@@ -55,6 +56,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_09_125535) do
     t.datetime "created_at", null: false
     t.boolean "e2e_required", default: true, null: false
     t.json "gates_config", default: {}
+    t.text "github_pat"
     t.string "github_pat_secret_name"
     t.string "name"
     t.string "repo_default_branch"
@@ -62,7 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_09_125535) do
     t.string "slug", null: false
     t.string "state", default: "draft", null: false
     t.datetime "updated_at", null: false
-    t.string "webhook_secret_name"
+    t.text "webhook_secret"
     t.index ["slug"], name: "index_projects_on_slug", unique: true
     t.index ["state"], name: "index_projects_on_state"
   end

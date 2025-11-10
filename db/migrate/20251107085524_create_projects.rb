@@ -8,8 +8,9 @@ class CreateProjects < ActiveRecord::Migration[8.1]
       t.text :brief
       t.string :repo_full_name
       t.string :repo_default_branch
+      t.text :github_pat
       t.string :github_pat_secret_name
-      t.string :webhook_secret_name
+      t.text :webhook_secret
       t.json :gates_config, default: {}
       t.boolean :e2e_required, default: true, null: false
 
