@@ -14,6 +14,9 @@ Rails.application.routes.draw do
 
   # Projects and Runs
   resources :projects, only: [:index, :show, :new, :create, :edit, :update] do
+    member do
+      post :trigger_orchestrator
+    end
     resources :runs, only: [:index]
   end
 

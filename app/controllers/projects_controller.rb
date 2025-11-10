@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ProjectsController < ApplicationController
-  before_action :set_project, only: [:show, :edit, :update]
+  before_action :set_project, only: [:show, :edit, :update, :trigger_orchestrator]
 
   def index
     @projects = Project.left_joins(:work_items)
@@ -48,6 +48,21 @@ class ProjectsController < ApplicationController
       redirect_to @project, notice: "Project was successfully updated."
     else
       render :edit, status: :unprocessable_content
+    end
+  end
+
+  def trigger_orchestrator
+    if @project.orchestrator_running?
+      redirect_to @project, alert: "Orchestrator is already running for this project."
+      return
+    end
+
+    result = OrchestratorAgentService.new(@project).run
+
+    if result[:success]
+      redirect_to @project, notice: "Orchestrator triggered successfully. #{result[:work_items_created]} work items created."
+    else
+      redirect_to @project, alert: "Failed to trigger orchestrator: #{result[:error]}"
     end
   end
 

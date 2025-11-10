@@ -38,4 +38,14 @@ class Project < ApplicationRecord
       transitions from: :live, to: :in_build
     end
   end
+
+  # Check if orchestrator is currently running
+  # Since orchestrator runs synchronously and creates work items quickly,
+  # we check if work items were created very recently (within last 10 seconds)
+  # which would indicate orchestrator just ran or is running
+  def orchestrator_running?
+    # Check if work items were created very recently (within last 10 seconds)
+    # This is a proxy for orchestrator running since orchestrator creates work items synchronously
+    work_items.where("created_at > ?", 10.seconds.ago).exists?
+  end
 end

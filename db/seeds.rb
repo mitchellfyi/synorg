@@ -15,8 +15,7 @@ Dir[Rails.root.join("db/seeds/agents/*.rb")].sort.each do |file|
 end
 
 # Create demo project with real GitHub repository
-# The PAT is stored in Rails credentials under demo:pat and accessed via project.github_pat_secret_name
-# The webhook secret is stored in Rails credentials under demo:webhook_secret
+# The PAT and webhook secret are stored directly in the project record
 project = Project.find_or_create_by!(slug: "synorg-demo") do |p|
   p.name = "Synorg Demo"
   p.state = "draft"
@@ -35,7 +34,7 @@ project = Project.find_or_create_by!(slug: "synorg-demo") do |p|
   BRIEF
   p.repo_full_name = "mitchellfyi/synorg-demo"
   p.repo_default_branch = "main"
-  p.github_pat_secret_name = "demo:pat"
+  p.github_pat = Rails.application.credentials.dig(:demo, :pat)
   p.webhook_secret = Rails.application.credentials.dig(:demo, :webhook_secret)
   p.gates_config = {
     "require_review" => true,
@@ -52,65 +51,9 @@ puts "✓ Created project: #{project.name} (#{project.slug})"
 puts "✓ Available agents: #{Agent.count} total"
 puts "   - #{Agent.enabled.pluck(:key).join(', ')}"
 
-# Create repo bootstrap work item for demo project
-repo_bootstrap_agent = Agent.find_by(key: "repo-bootstrap")
-if repo_bootstrap_agent
-  WorkItem.find_or_initialize_by(
-    project: project,
-    work_type: "repo_bootstrap"
-  ).tap do |wi|
-    wi.payload = {
-      "title" => "Bootstrap Rails application",
-      "description" => "Initialize Rails 8.1 application with PostgreSQL, Solid Queue, Tailwind CSS v4, TypeScript, and esbuild"
-    }
-    wi.status = "pending"
-    wi.priority = 1
-    wi.assigned_agent = repo_bootstrap_agent
-    wi.save!
-  end
-end
-
-# Create sample work items
-WorkItem.find_or_initialize_by(
-  project: project,
-  work_type: "code_review"
-).tap do |wi|
-  wi.payload = {
-    "pr_number" => 123,
-    "files_changed" => 5
-  }
-  wi.status = "pending"
-  wi.priority = 10
-  wi.save!
-end
-
-WorkItem.find_or_initialize_by(
-  project: project,
-  work_type: "run_tests"
-).tap do |wi|
-  wi.payload = {
-    "branch" => "feature/new-feature",
-    "commit_sha" => "abc123"
-  }
-  wi.status = "pending"
-  wi.priority = 20
-  wi.save!
-end
-
-WorkItem.find_or_initialize_by(
-  project: project,
-  work_type: "deploy"
-).tap do |wi|
-  wi.payload = {
-    "environment" => "staging",
-    "version" => "1.0.0"
-  }
-  wi.status = "pending"
-  wi.priority = 5
-  wi.save!
-end
-
-puts "✓ Created work items: #{WorkItem.count} total"
+# Orchestrator agent will create work items based on project state
+# No need to manually create work items here
+puts "✓ Work items will be created by orchestrator agent based on project state"
 
 # Create sample integrations
 Integration.find_or_create_by!(

@@ -4,7 +4,7 @@
 
 export default {
   // Ruby files
-  '*.{rb,rake}': ['bundle exec rubocop --autocorrect-all'],
+  '*.{rb,rake}': ['bundle exec rubocop -f github --autocorrect-all'],
 
   // ERB templates
   '*.erb': ['bundle exec erb_lint --autocorrect'],

@@ -8,7 +8,7 @@ pre-commit:
     # Ruby: RuboCop with auto-correct
     rubocop:
       glob: "*.{rb,rake}"
-      run: bundle exec rubocop --autocorrect-all {staged_files}
+      run: bundle exec rubocop -f github --autocorrect-all {staged_files}
       stage_fixed: true
 
     # ERB: erb_lint with auto-correct

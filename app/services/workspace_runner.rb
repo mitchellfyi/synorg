@@ -123,14 +123,11 @@ class WorkspaceRunner
     Run.exists?(idempotency_key: idempotency_key, outcome: "success")
   end
 
+  # Fetch PAT from project record
+  #
+  # @return [String, nil] The PAT value or nil if not found
   def fetch_project_pat
-    # Fetch PAT from Rails credentials or environment
-    # In production, this should use a secure secret management system
-    return nil unless project.github_pat_secret_name
-
-    # For now, we'll use Rails credentials
-    Rails.application.credentials.dig(:github, :pat) ||
-      ENV["GITHUB_PAT"]
+    project.github_pat
   end
 
   def generate_branch_name

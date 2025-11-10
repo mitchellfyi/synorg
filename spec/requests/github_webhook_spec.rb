@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "GitHub Webhooks", type: :request do
-  let!(:project) { create(:project, webhook_secret_name: "TEST_WEBHOOK_SECRET") }
+  let!(:project) { create(:project, webhook_secret: "test-secret-123") }
   let(:webhook_secret) { "test-secret-123" }
   let(:delivery_id) { "12345-67890-abcdef" }
 
@@ -22,11 +22,6 @@ RSpec.describe "GitHub Webhooks", type: :request do
   end
 
   let(:payload_json) { valid_payload.to_json }
-
-  before do
-    # Mock the secret fetch
-    allow_any_instance_of(GithubWebhookController).to receive(:fetch_secret).with("TEST_WEBHOOK_SECRET").and_return(webhook_secret)
-  end
 
   def generate_signature(payload, secret)
     "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", secret, payload)

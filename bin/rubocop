@@ -4,5 +4,7 @@ require "bundler/setup"
 
 # Explicit RuboCop config increases performance slightly while avoiding config confusion.
 ARGV.unshift("--config", File.expand_path("../.rubocop.yml", __dir__))
+# Use GitHub format for consistent output
+ARGV.unshift("-f", "github") unless ARGV.include?("-f") || ARGV.include?("--format")
 
 load Gem.bin_path("rubocop", "rubocop")
