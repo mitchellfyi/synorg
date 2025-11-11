@@ -23,7 +23,7 @@ class AgentsController < ApplicationController
         format.turbo_stream { redirect_to @agent, notice: "Agent was successfully updated." }
       else
         format.html { render :edit, status: :unprocessable_content }
-        format.turbo_stream { render :edit, status: :unprocessable_content }
+        format.turbo_stream { redirect_to @agent, alert: "Failed to update agent." }
       end
     end
   end
