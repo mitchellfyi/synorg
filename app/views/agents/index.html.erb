@@ -20,7 +20,7 @@
                         <h3 class="text-lg font-medium text-gray-900 truncate">
                           <%= agent.name %>
                         </h3>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= agent.enabled? ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800" %>">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= agent_enabled_badge_class(agent.enabled?) %>">
                           <%= agent.enabled? ? "Enabled" : "Disabled" %>
                         </span>
                       </div>

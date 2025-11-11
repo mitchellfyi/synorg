@@ -13,7 +13,7 @@
             <h1 class="text-3xl font-bold text-gray-900">
               <%= @agent.name %>
             </h1>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= @agent.enabled? ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800" %>">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= agent_enabled_badge_class(@agent.enabled?) %>">
               <%= @agent.enabled? ? "Enabled" : "Disabled" %>
             </span>
           </div>
