@@ -81,5 +81,10 @@ RSpec/DescribeClass:
   Exclude:
     - 'spec/integration/**/*'
     - 'spec/requests/**/*'
+
+# Exclude agent_caching_spec.rb from DynamicFindBy - it's testing a custom find_by_cached method
+Rails/DynamicFindBy:
+  Exclude:
+    - 'spec/models/agent_caching_spec.rb'
 # Overrides can go here if needed
 
