@@ -19,6 +19,9 @@ class Project < ApplicationRecord
   validates :slug, presence: true, uniqueness: true
   validates :state, presence: true
 
+  # Custom validation: warn if github_pat is set directly (deprecated)
+  validate :warn_deprecated_pat_storage, if: -> { github_pat.present? }
+
   # Broadcast Turbo Stream updates
   broadcasts_to ->(project) { "projects" }, inserts_by: :prepend, partial: "projects/project"
   after_update_commit -> { broadcast_replace_to "projects", partial: "projects/project", locals: { project: self } }
@@ -72,6 +75,24 @@ class Project < ApplicationRecord
     work_items.exists?(["created_at > ?", 10.seconds.ago])
   end
 
+  # Load GitHub PAT from environment using the configured secret name
+  # Returns nil if no secret name is configured or secret is not found
+  # This is the preferred way to access PATs instead of storing them directly
+  def github_token
+    return nil unless github_pat_secret_name.present?
+
+    token = ENV[github_pat_secret_name]
+    
+    # Fall back to direct storage if environment variable not found (deprecated path)
+    if token.blank? && github_pat.present?
+      Rails.logger.warn("Using deprecated direct PAT storage for project #{slug}. " \
+                       "Please migrate to github_pat_secret_name.")
+      return github_pat
+    end
+
+    token
+  end
+
   private
 
   # Projects don't have owners in our system
@@ -81,5 +102,13 @@ class Project < ApplicationRecord
 
   def activity_recipient
     self
+  end
+
+  # Validation to warn about deprecated PAT storage
+  def warn_deprecated_pat_storage
+    Rails.logger.warn(
+      "Project #{slug} is using deprecated direct PAT storage. " \
+      "Please migrate to github_pat_secret_name for better security."
+    )
   end
 end

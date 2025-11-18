@@ -31,6 +31,19 @@ class Run < ApplicationRecord
     end
   }
 
+  # Audit logging for run events
+  after_update_commit -> {
+    if saved_change_to_started_at? && started_at.present?
+      AuditLog.log_run(event_type: AuditLog::RUN_STARTED, run: self)
+    end
+  }
+  after_update_commit -> {
+    if saved_change_to_finished_at? && finished_at.present?
+      event_type = outcome == "failure" ? AuditLog::RUN_FAILED : AuditLog::RUN_FINISHED
+      AuditLog.log_run(event_type: event_type, run: self)
+    end
+  }
+
   # Broadcast Turbo Stream updates to project-specific channel
   after_create_commit -> { broadcast_prepend_to "project_#{work_item.project_id}_runs", target: "runs_#{work_item.project_id}", partial: "runs/run_row", locals: { run: self } }
   after_update_commit -> { broadcast_replace_to "project_#{work_item.project_id}_runs", partial: "runs/run_row", locals: { run: self } }

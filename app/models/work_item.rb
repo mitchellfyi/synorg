@@ -43,6 +43,18 @@ class WorkItem < ApplicationRecord
     end
   }
 
+  # Audit logging for assignments and claims
+  after_update_commit -> {
+    if saved_change_to_assigned_agent_id? && assigned_agent_id.present?
+      AuditLog.log_work_item(event_type: AuditLog::WORK_ITEM_ASSIGNED, work_item: self, agent: assigned_agent)
+    end
+  }
+  after_update_commit -> {
+    if saved_change_to_locked_by_agent_id? && locked_by_agent_id.present?
+      AuditLog.log_work_item(event_type: AuditLog::WORK_ITEM_CLAIMED, work_item: self, agent: locked_by_agent)
+    end
+  }
+
   # Broadcast Turbo Stream updates to project-specific channel
   after_create_commit -> { broadcast_prepend_to "project_#{project_id}_work_items", target: "work_items_#{project_id}", partial: "work_items/work_item", locals: { work_item: self } }
   after_update_commit -> { broadcast_replace_to "project_#{project_id}_work_items", partial: "work_items/work_item", locals: { work_item: self } }

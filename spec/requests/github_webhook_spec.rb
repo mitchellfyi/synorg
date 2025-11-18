@@ -43,6 +43,7 @@ RSpec.describe "GitHub Webhooks" do
             },
             env: { "rack.input" => StringIO.new(payload_json) }
         end.to change(WebhookEvent, :count).by(1)
+          .and change(AuditLog, :count).by(1)
 
         expect(response).to have_http_status(:accepted)
 
@@ -51,6 +52,11 @@ RSpec.describe "GitHub Webhooks" do
         expect(webhook_event.event_type).to eq("issues")
         expect(webhook_event.delivery_id).to eq(delivery_id)
         expect(webhook_event.payload["action"]).to eq("opened")
+
+        audit_log = AuditLog.last
+        expect(audit_log.event_type).to eq(AuditLog::WEBHOOK_RECEIVED)
+        expect(audit_log.status).to eq(AuditLog::STATUS_SUCCESS)
+        expect(audit_log.project).to eq(project)
       end
 
       it "processes the event" do
@@ -69,7 +75,7 @@ RSpec.describe "GitHub Webhooks" do
     end
 
     context "with invalid signature" do
-      it "rejects the webhook" do
+      it "rejects the webhook with 400 Bad Request" do
         expect do
           post "/github/webhook",
             headers: {
@@ -82,12 +88,31 @@ RSpec.describe "GitHub Webhooks" do
             env: { "rack.input" => StringIO.new(payload_json) }
         end.not_to change(WebhookEvent, :count)
 
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:bad_request)
+      end
+
+      it "logs invalid signature to audit log" do
+        expect do
+          post "/github/webhook",
+            headers: {
+              "X-GitHub-Event" => "issues",
+              "X-Hub-Signature-256" => "sha256=invalid",
+              "X-GitHub-Delivery" => delivery_id,
+              "CONTENT_TYPE" => "application/json",
+              "CONTENT_LENGTH" => payload_json.bytesize.to_s
+            },
+            env: { "rack.input" => StringIO.new(payload_json) }
+        end.to change(AuditLog, :count).by(1)
+
+        audit_log = AuditLog.last
+        expect(audit_log.event_type).to eq(AuditLog::WEBHOOK_INVALID_SIGNATURE)
+        expect(audit_log.status).to eq(AuditLog::STATUS_BLOCKED)
+        expect(audit_log.ip_address).to be_present
       end
     end
 
     context "with missing signature" do
-      it "rejects the webhook" do
+      it "rejects the webhook with 400 Bad Request" do
         expect do
           post "/github/webhook",
             headers: {
@@ -99,7 +124,25 @@ RSpec.describe "GitHub Webhooks" do
             env: { "rack.input" => StringIO.new(payload_json) }
         end.not_to change(WebhookEvent, :count)
 
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:bad_request)
+      end
+
+      it "logs missing signature to audit log" do
+        expect do
+          post "/github/webhook",
+            headers: {
+              "X-GitHub-Event" => "issues",
+              "X-GitHub-Delivery" => delivery_id,
+              "CONTENT_TYPE" => "application/json",
+              "CONTENT_LENGTH" => payload_json.bytesize.to_s
+            },
+            env: { "rack.input" => StringIO.new(payload_json) }
+        end.to change(AuditLog, :count).by(1)
+
+        audit_log = AuditLog.last
+        expect(audit_log.event_type).to eq(AuditLog::WEBHOOK_MISSING_SIGNATURE)
+        expect(audit_log.status).to eq(AuditLog::STATUS_BLOCKED)
+        expect(audit_log.ip_address).to be_present
       end
     end
 

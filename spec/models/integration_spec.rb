@@ -32,4 +32,54 @@ RSpec.describe Integration do
       end
     end
   end
+
+  describe "#credential" do
+    let(:project) { Project.create!(slug: "test") }
+
+    context "when value is blank" do
+      it "returns nil" do
+        integration = described_class.create!(
+          project: project,
+          kind: "github",
+          name: "Test",
+          status: "active",
+          value: nil
+        )
+
+        expect(integration.credential).to be_nil
+      end
+    end
+
+    context "when value references an environment variable" do
+      it "returns the environment variable value" do
+        ENV["TEST_SECRET"] = "secret_value_123"
+
+        integration = described_class.create!(
+          project: project,
+          kind: "github",
+          name: "Test",
+          status: "active",
+          value: "TEST_SECRET"
+        )
+
+        expect(integration.credential).to eq("secret_value_123")
+
+        ENV.delete("TEST_SECRET")
+      end
+    end
+
+    context "when environment variable is not set" do
+      it "returns nil" do
+        integration = described_class.create!(
+          project: project,
+          kind: "github",
+          name: "Test",
+          status: "active",
+          value: "NONEXISTENT_VAR"
+        )
+
+        expect(integration.credential).to be_nil
+      end
+    end
+  end
 end
