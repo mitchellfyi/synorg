@@ -50,7 +50,7 @@ class Rack::Attack
   # Log blocked requests
   ActiveSupport::Notifications.subscribe("rack.attack") do |name, start, finish, request_id, payload|
     req = payload[:request]
-    if [:throttle, :blocklist, :blocklist].include?(req.env["rack.attack.match_type"])
+    if [:throttle, :blocklist].include?(req.env["rack.attack.match_type"])
       Rails.logger.warn(
         "[Rack::Attack] #{req.env['rack.attack.match_type']} #{req.ip} #{req.request_method} #{req.fullpath}"
       )
