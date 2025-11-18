@@ -152,25 +152,38 @@ bin/bundler-audit     # Check for vulnerable gems
 
 ## CI/CD
 
+### Continuous Integration
+
 GitHub Actions runs on every non-draft PR:
 
-- Ruby linting (RuboCop, erb_lint)
+- Ruby linting (RuboCop --parallel, erb_lint)
 - JavaScript linting (ESLint, Prettier)
 - TypeScript type checking
 - Security scans (Brakeman, bundler-audit)
-- RSpec test suite
+- RSpec test suite with PostgreSQL
 - Playwright smoke tests
+
+### Continuous Deployment
+
+Automated deployment to production on push to `main`:
+
+- Docker image build and push to GitHub Container Registry (ghcr.io)
+- Kamal deployment to configured servers
+- Health checks and automatic rollback on failure
+
+See `docs/ops/deploy.md` for detailed deployment documentation.
 
 ### Required Secrets
 
-Set `RAILS_MASTER_KEY` in GitHub Actions secrets for CI to work:
+Set these in GitHub Actions secrets (Settings → Secrets and variables → Actions):
 
-1. Go to repository Settings → Secrets and variables → Actions
-2. Click "New repository secret"
-3. Name: `RAILS_MASTER_KEY`
-4. Value: Contents of `config/master.key` (never commit this file)
+1. `RAILS_MASTER_KEY` - Contents of `config/master.key` (required for CI and deployment)
+2. `DATABASE_URL` - PostgreSQL connection string (required for deployment)
+3. `SSH_PRIVATE_KEY` - SSH key for deployment server access (required for deployment)
+4. `DEPLOY_HOST` - Server IP or hostname (required for deployment)
+5. `DIGITALOCEAN_ACCESS_TOKEN` - DigitalOcean API token (optional)
 
-The master key is used to decrypt Rails credentials. Keep it secure.
+See `docs/ops/secrets.md` for detailed secrets management guide.
 
 ## Project Structure
 
@@ -197,7 +210,8 @@ spec/                 # RSpec tests
 - **Setup Guide**: See this README
 - **Agent Conventions**: See `AGENTS.md`
 - **Copilot Instructions**: See `.github/copilot-instructions.md`
-- **Detailed Docs**: See `docs/` directory
+- **Deployment Guide**: See `docs/ops/deploy.md` for Kamal deployment and CI/CD
+- **Secrets Management**: See `docs/ops/secrets.md` for environment secrets and security
 
 ## Contributing
 

@@ -48,7 +48,7 @@ jobs:
             rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
 
       - name: Lint Ruby code
-        run: bin/rubocop -f github
+        run: bin/rubocop --parallel -f github
 
       - name: Lint ERB templates
         run: bundle exec erb_lint --lint-all

@@ -439,8 +439,11 @@ AgentSeeder.seed_agent(
     ### CI/CD
     - GitHub Actions workflow configuration
     - Build speed and reliability
-    - Deployment automation
+    - Deployment automation (Kamal, Docker)
     - Environment management
+    - Container registry configuration
+    - Deployment workflow completeness
+    - Health checks and rollback procedures
 
     ### Linting & Formatting
     - RuboCop configuration and version
@@ -468,6 +471,15 @@ AgentSeeder.seed_agent(
     - Command consistency
     - Error message quality
     - Feedback loop speed
+
+    ### Deployment & Operations
+    - Deployment workflow (`.github/workflows/deploy.yml`)
+    - Kamal configuration (`config/deploy.yml`)
+    - Secrets management documentation
+    - Deployment guides (`docs/ops/deploy.md`)
+    - Server provisioning documentation
+    - SSL/TLS configuration
+    - Monitoring and debugging tools
 
     ## Determinism
 
