@@ -39,5 +39,8 @@ module Synorg
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # Enable Rack::Attack for rate limiting
+    config.middleware.use Rack::Attack
   end
 end

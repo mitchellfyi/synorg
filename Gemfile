@@ -54,6 +54,9 @@ gem "ruby-openai", "~> 7.0"
 # Activity tracking for full observability [https://github.com/public-activity/public_activity]
 gem "public_activity"
 
+# Rate limiting and throttling [https://github.com/rack/rack-attack]
+gem "rack-attack"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

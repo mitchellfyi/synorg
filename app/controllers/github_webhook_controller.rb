@@ -24,12 +24,37 @@ class GithubWebhookController < ApplicationController
     signature = request.headers["X-Hub-Signature-256"]
     delivery_id = request.headers["X-GitHub-Delivery"]
 
+    # Get request metadata for audit logging
+    ip_address = request.remote_ip
+    request_id = request.request_id
+
+    # Check for missing signature
+    unless signature
+      Rails.logger.warn("Webhook missing signature for delivery: #{delivery_id}")
+      AuditLog.log_webhook(
+        event_type: AuditLog::WEBHOOK_MISSING_SIGNATURE,
+        status: AuditLog::STATUS_BLOCKED,
+        ip_address: ip_address,
+        request_id: request_id,
+        payload_excerpt: request_body.truncate(500)
+      )
+      head :bad_request
+      return
+    end
+
     # Find the project by webhook signature verification
     project = WebhookProjectFinder.find_by_signature(request_body, signature)
 
     unless project
       Rails.logger.warn("Webhook signature verification failed for delivery: #{delivery_id}")
-      head :unauthorized
+      AuditLog.log_webhook(
+        event_type: AuditLog::WEBHOOK_INVALID_SIGNATURE,
+        status: AuditLog::STATUS_BLOCKED,
+        ip_address: ip_address,
+        request_id: request_id,
+        payload_excerpt: request_body.truncate(500)
+      )
+      head :bad_request
       return
     end
 
@@ -48,6 +73,16 @@ class GithubWebhookController < ApplicationController
       event_type: event_type,
       delivery_id: delivery_id,
       payload: payload
+    )
+
+    # Log successful webhook receipt to audit log
+    AuditLog.log_webhook(
+      event_type: AuditLog::WEBHOOK_RECEIVED,
+      status: AuditLog::STATUS_SUCCESS,
+      project: project,
+      ip_address: ip_address,
+      request_id: request_id,
+      payload_excerpt: { event_type: event_type, delivery_id: delivery_id }.to_json
     )
 
     # Process the event
